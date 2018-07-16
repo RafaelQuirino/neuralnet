@@ -18,19 +18,30 @@ static const vec_type_t NORM_UCHAR = (vec_type_t) UCHAR_MAX;
 
 typedef struct
 {
+    // Data
     vec_t *X; // features
     vec_t *Y; // labels
-
     int size;
+
+    // Params
     int batch_size;
     int row_offset;
     int current_batch;
     int current_epoch;
 
+    // Flags
     int repeat_flag;
     int reshuffle_flag;
 
 } dataset_t;
+
+typedef struct
+{
+    vec_t* X;
+    vec_t* Y;
+    int size;
+
+} minibatch_t;
 
 
 

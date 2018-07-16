@@ -53,19 +53,22 @@ int main (int argc, char** argv)
     vec_t* C = vec_clone_portion(B, 1, 3);
     vec_print(C);
 
+    vec_t* D = vec_clone_portion_circ(B, 2, 9);
+    vec_print(D);
+
 
 
     dataset_t* dataset = dat_get_dataset_from_representation_1(file, labels);
 
-    for (i = 0; i < dataset->size; i++) {
-        for (j = 0; j < dataset->Y->columns; j++)
-            printf("[%g]", vec_get(dataset->Y, i, j));
-        printf(": ");
-        for (j = 0; j < 12; j++)
-        // for (j = 127; j >= 115; j--)
-            printf("[%g]", vec_get(dataset->X, i, j));
-        printf("\n\n");
-    }
+    // for (i = 0; i < dataset->size; i++) {
+    //     for (j = 0; j < dataset->Y->columns; j++)
+    //         printf("[%g]", vec_get(dataset->Y, i, j));
+    //     printf(": ");
+    //     for (j = 0; j < 12; j++)
+    //     // for (j = 127; j >= 115; j--)
+    //         printf("[%g]", vec_get(dataset->X, i, j));
+    //     printf("\n\n");
+    // }
 
 
     return 0;

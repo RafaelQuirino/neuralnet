@@ -407,6 +407,47 @@ vec_t* vec_clone_portion (vec_t* src, int offset, int size)
     return dest;
 }
 
+vec_t* vec_clone_portion_circ (vec_t* src, int offset, int size)
+{
+    int line = __LINE__ - 2;
+    
+    if (src == NULL) 
+    {
+        ut_errmsg (
+            "Pointer vec_t* is NULL.",
+            __FILE__, line, 1
+        );
+    }
+
+    if (offset < 0 || size < 0)
+    {
+        ut_errmsg (
+            "Either offset and/or size are wrong.",
+            __FILE__, line, 1
+        );
+    }
+
+    int i, j, curr_row = 0;
+    int real_offset = offset >= src->m ? offset % src->m : offset;
+    int curr_offset = real_offset;
+
+    vec_t* dest = vec_new(size, src->n);
+
+    for (i = 0; i < size; i++)
+    {
+        for (j = 0; j < src->n; j++)
+        {
+            vec_type_t elem = vec_get(src, curr_offset, j);
+            vec_set(dest, curr_row, j, elem);
+        }
+
+        curr_offset = (curr_offset + 1) % src->m;
+        curr_row += 1;
+    }
+
+    return dest;
+}
+
 void vec_print (vec_t* vec)
 {
     int line = __LINE__ - 2;

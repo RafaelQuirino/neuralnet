@@ -19,7 +19,7 @@ extern "C" {
 
 
 
-#define VEC_TYPE VEC_FLOAT
+#define VEC_TYPE VEC_DOUBLE
 typedef double vec_type_t;
 
 typedef struct 
@@ -77,13 +77,14 @@ void vec_push_column     (vec_t* vec, vec_type_t* arr, int arrsize);
 void vec_pop_column      (vec_t* vec, vec_type_t* arr);
 //-----------------------------------------------------------------------------
 
-void   vec_copy          (vec_t* dest, vec_t* src);
-void   vec_copy_portion  (vec_t* dest, vec_t* src, int offset, int size);
-vec_t* vec_clone         (vec_t* vec);
-vec_t* vec_clone_portion (vec_t* vec, int offset, int size);
-void   vec_print         (vec_t* vec);
-void   vec_print_portion (vec_t* vec, int portion, int side);
-void   vec_print_bitmap  (vec_t* bitmap, int row, int rows, int columns);
+void   vec_copy               (vec_t* dest, vec_t* src);
+void   vec_copy_portion       (vec_t* dest, vec_t* src, int offset, int size);
+vec_t* vec_clone              (vec_t* vec);
+vec_t* vec_clone_portion      (vec_t* vec, int offset, int size);
+vec_t* vec_clone_portion_circ (vec_t* src, int offset, int size);
+void   vec_print              (vec_t* vec);
+void   vec_print_portion      (vec_t* vec, int portion, int side);
+void   vec_print_bitmap       (vec_t* bitmap, int row, int rows, int columns);
 
 //=============================================================================
 // REDUCTIONS

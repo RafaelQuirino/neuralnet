@@ -23,7 +23,7 @@ dataset_t* dat_new ()
 
     // Some default values
     data->size           = 0;
-    data->batch_size     = 1024;
+    data->batch_size     = 128;
     data->row_offset     = 0;
     data->current_batch  = 0;
     data->current_epoch  = 0;
@@ -114,9 +114,38 @@ void dat_repeat (dataset_t* data)
 
 
 
-vec_t* dat_next_batch (dataset_t* data)
+minibatch_t* dat_next_minibatch (dataset_t* data)
 {
-    return NULL;
+    int line;
+
+    minibatch_t* minibatch = NULL;
+    minibatch = (minibatch_t*) malloc (sizeof(minibatch_t));
+    line = __LINE__ - 1;
+
+    if (!minibatch)
+    {
+        ut_errmsg(
+            "Couldnot allocate memory for the minibatch.",
+            __FILE__, line, 1
+        );
+    }
+
+    minibatch->X = vec_clone_portion_circ(
+        data->X, data->row_offset, data->batch_size
+    );
+
+    minibatch->Y = vec_clone_portion_circ(
+        data->Y, data->row_offset, data->batch_size
+    );
+
+    minibatch->size = data->batch_size;
+
+    data->current_batch += 1;
+    if ((data->row_offset + data->batch_size) >= data->size)
+        data->current_epoch += 1;
+    data->row_offset = (data->row_offset + data->batch_size) % data->size;
+
+    return minibatch;
 }
 
 
@@ -233,7 +262,7 @@ vec_type_t** dat_get_lines_representation_1 (
 
 
 
-dataset_t* dat_get_dataset_from_representation_1(
+dataset_t* dat_get_dataset_from_representation_1 (
     const char* linesfile, const char* labelsfile
 )
 {
@@ -248,10 +277,10 @@ dataset_t* dat_get_dataset_from_representation_1(
     utext_t* labels = txt_get_ulines(labelsfile, &num_lines_2);
     line = __LINE__ - 1;
 
-    printf("%d, %d\n", num_lines, num_lines_2);
+    // printf("%d, %d\n", num_lines, num_lines_2);
 
     //if (num_lines != num_lines_2)
-    if (abs(num_lines - num_lines_2) > 1)
+    if (abs(num_lines - num_lines_2) > 1) // Hardcoded solution. Needs fixing...
     {
         ut_errmsg(
             "Text and label files doesn't match.",
@@ -270,6 +299,9 @@ dataset_t* dat_get_dataset_from_representation_1(
     );
     
     dataset->size = num_lines;
+
+    txt_free_ulines(&lines, num_lines);
+    txt_free_ulines(&labels, num_lines);
 
     return dataset;
 }
