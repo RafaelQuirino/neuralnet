@@ -7,12 +7,13 @@ dataset_t* dat_new ()
 {
     dataset_t* data = NULL;
     data = (dataset_t*) malloc (sizeof(dataset_t));
+    int line = __LINE__ - 1;
 
     if (data == NULL)
     {
         ut_errmsg (
             "Could not allocate memory for the dataset.",
-            __FILE__, __LINE__ - 6, 1
+            __FILE__, line, 1
         );
     }
 
@@ -21,6 +22,7 @@ dataset_t* dat_new ()
     data->Y = NULL;
 
     // Some default values
+    data->size           = 0;
     data->batch_size     = 1024;
     data->row_offset     = 0;
     data->current_batch  = 0;
@@ -124,10 +126,10 @@ vec_t* dat_next_batch (dataset_t* data)
 
 
 vec_type_t** dat_get_lines_label_1 (
-    utext_t* lines, int num_lines
+    utext_t* lines, int num_lines, int output_size
 )
 {
-    int i, line, output_size = 2;
+    int i, line;
 
     vec_type_t** vecs = NULL;
     vecs = (vec_type_t**) malloc (num_lines * sizeof(vec_type_t*));
@@ -212,7 +214,7 @@ vec_type_t** dat_get_lines_representation_1 (
         }
     }
 
-    // 
+    // Normalizing each unsigned char
     for (i = 0; i < num_lines; i++)
     {
         int len = strlen((const char*) lines[i]);
@@ -227,4 +229,47 @@ vec_type_t** dat_get_lines_representation_1 (
     }
 
     return vecs;
+}
+
+
+
+dataset_t* dat_get_dataset_from_representation_1(
+    const char* linesfile, const char* labelsfile
+)
+{
+    int line;
+    int max_chars = 128;
+    int output_size = 2;
+
+    dataset_t* dataset = dat_new();
+
+    int num_lines, num_lines_2;
+    utext_t* lines  = txt_get_ulines(linesfile, &num_lines);
+    utext_t* labels = txt_get_ulines(labelsfile, &num_lines_2);
+    line = __LINE__ - 1;
+
+    printf("%d, %d\n", num_lines, num_lines_2);
+
+    //if (num_lines != num_lines_2)
+    if (abs(num_lines - num_lines_2) > 1)
+    {
+        ut_errmsg(
+            "Text and label files doesn't match.",
+            __FILE__, line, 1
+        );
+    }
+    
+    dataset->X = vec_new_arr(
+        dat_get_lines_representation_1(lines, num_lines, max_chars),
+        num_lines, max_chars
+    );
+
+    dataset->Y = vec_new_arr(
+        dat_get_lines_label_1(labels, num_lines, output_size),
+        num_lines, output_size
+    );
+    
+    dataset->size = num_lines;
+
+    return dataset;
 }

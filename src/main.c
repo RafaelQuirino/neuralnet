@@ -55,21 +55,15 @@ int main (int argc, char** argv)
 
 
 
-    // Testing text.h
-    int num_lines, num_lines_2;
-    utext_t* ulines  = txt_get_ulines(file, &num_lines);
-    utext_t* ulabels = txt_get_ulines(labels, &num_lines_2);
+    dataset_t* dataset = dat_get_dataset_from_representation_1(file, labels);
 
-    // Testing data.h
-    vec_type_t** line_vecs   = dat_get_lines_representation_1(ulines, num_lines, 128);
-    vec_type_t** line_labels = dat_get_lines_label_1(ulabels, num_lines);
-
-    for (i = 0; i < num_lines; i++) {
-        for (j = 0; j < 2; j++)
-            printf("[%g]", line_labels[i][j]);
+    for (i = 0; i < dataset->size; i++) {
+        for (j = 0; j < dataset->Y->columns; j++)
+            printf("[%g]", vec_get(dataset->Y, i, j));
         printf(": ");
         for (j = 0; j < 12; j++)
-            printf("[%g]", line_vecs[i][j]);
+        // for (j = 127; j >= 115; j--)
+            printf("[%g]", vec_get(dataset->X, i, j));
         printf("\n\n");
     }
 

@@ -23,3 +23,13 @@ void txt_print_ulines (utext_t* ulines, int num_lines)
         txt_print_uline(ulines[i]);
     }
 }
+
+void txt_free_ulines (utext_t** ulines, int num_lines)
+{
+    int i;
+
+    for (i = 0; i < num_lines; i++)
+        free((*ulines)[i]);
+
+    free(*ulines);
+}
