@@ -1,0 +1,1 @@
+/usr/bin/cc     CMakeFiles/nn.dir/src/data.c.o CMakeFiles/nn.dir/src/io.c.o CMakeFiles/nn.dir/src/text.c.o CMakeFiles/nn.dir/src/linalg.c.o CMakeFiles/nn.dir/src/util.c.o CMakeFiles/nn.dir/src/main.c.o  -o nn -rdynamic -lm -lcblas -lpthread 

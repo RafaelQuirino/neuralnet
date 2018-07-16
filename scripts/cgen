@@ -1,0 +1,20 @@
+#!/bin/bash
+
+ROOT="/home/rafael/Documents/workspace/neural_net"
+
+HDIR="${ROOT}/include"
+CDIR="${ROOT}/src"
+STR=""
+for target in "$@"; do
+	STR="#ifdef __cplusplus\n"
+	STR="${STR}extern \"C\" {\n"
+	STR="${STR}#endif\n"
+	STR="${STR}#ifndef _$(echo $target | awk '{print toupper($0)}')_H_\n"
+	STR="${STR}#define _$(echo $target | awk '{print toupper($0)}')_H_\n\n\n\n"
+	STR="${STR}#endif // _$(echo $target | awk '{print toupper($0)}')_H_\n"
+	STR="${STR}#ifdef __cplusplus\n"
+	STR="${STR}}\n"
+	STR="${STR}#endif"
+	echo -e ${STR} > $HDIR/$target.h
+	echo -e "#include \"../include/$target.h\"" > $CDIR/$target.c
+done
