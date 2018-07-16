@@ -10,6 +10,7 @@ typedef char*          text_t;
 typedef unsigned char* utext_t;
 
 utext_t* txt_get_ulines   (const char* fname, int* num_lines);
+void     txt_print_uline  (utext_t uline);
 void     txt_print_ulines (utext_t* ulines, int num_lines);
 
 void txt_trim                  (char* str);

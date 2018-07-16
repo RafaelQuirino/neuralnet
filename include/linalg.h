@@ -14,6 +14,12 @@ extern "C" {
 
 
 
+#define VEC_FLOAT  0
+#define VEC_DOUBLE 1
+
+
+
+#define VEC_TYPE VEC_FLOAT
 typedef double vec_type_t;
 
 typedef struct 

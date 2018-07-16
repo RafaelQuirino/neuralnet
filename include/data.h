@@ -37,7 +37,7 @@ typedef struct
 dataset_t* dat_new    ();
 void       dat_free   (dataset_t** data);
 void       dat_export (dataset_t* data, const char* fname);
-dataset_t* dat_import (const char* features_file, const char* labels_file);
+dataset_t* dat_import (const char* fname);
 
 dataset_t* dat_import_array (
     vec_type_t** features_arr, vec_type_t** labels_arr,
@@ -56,8 +56,12 @@ vec_t* dat_next_batch (dataset_t* data);
 //-----------------------------------------------------------------------------
 
 // Specific data representations interface ------------------------------------
+vec_type_t** dat_get_lines_label_1 (
+    utext_t* lines, int num_lines
+);
+
 vec_type_t** dat_get_lines_representation_1 (
-    utext_t* lines, int num_lines, int limit
+    utext_t* lines, int num_lines, int max_chars
 );
 //-----------------------------------------------------------------------------
 

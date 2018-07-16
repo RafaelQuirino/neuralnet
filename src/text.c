@@ -9,12 +9,17 @@ utext_t* txt_get_ulines (const char* fname, int* num_lines)
     return ulines;
 }
 
+void txt_print_uline (utext_t uline)
+{
+    printf("%s\n", (char*) uline);
+}
+
 void txt_print_ulines (utext_t* ulines, int num_lines)
 {
     int i;
 
     for (i = 0; i < num_lines; i++)
     {
-        printf("%s\n", (char*) ulines[i]);
+        txt_print_uline(ulines[i]);
     }
 }

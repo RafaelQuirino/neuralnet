@@ -877,13 +877,26 @@ void vec_dot (vec_t* A, vec_t* B, vec_t* AB)
         ldb   = N,
         ldc   = N;
 
-    cblas_dgemm ( // Specific for double operations
-        CblasRowMajor, CblasNoTrans, CblasNoTrans,
-        M, N, K,
-        alpha, (double*) A->vec, lda,
-        (double*) B->vec, ldb, beta,
-        (double*) AB->vec, ldc 
-    );
+    if (VEC_TYPE == VEC_FLOAT)
+    {
+        cblas_sgemm ( // Specific for single precision
+            CblasRowMajor, CblasNoTrans, CblasNoTrans,
+            M, N, K,
+            alpha, (float*) A->vec, lda,
+            (float*) B->vec, ldb, beta,
+            (float*) AB->vec, ldc 
+        );
+    }
+    else if (VEC_TYPE == VEC_DOUBLE)
+    {
+        cblas_dgemm ( // Specific for double precision
+            CblasRowMajor, CblasNoTrans, CblasNoTrans,
+            M, N, K,
+            alpha, (double*) A->vec, lda,
+            (double*) B->vec, ldb, beta,
+            (double*) AB->vec, ldc 
+        );
+    }
 
     // "Correcting" Not A Number situations
     for (i = 0; i < AB->m*AB->n; i++)
@@ -950,13 +963,26 @@ vec_t* vec_get_dot (vec_t* A, vec_t* B)
         ldb   = N,
         ldc   = N;
 
-    cblas_dgemm ( // Especific for double operations
-        CblasRowMajor, CblasNoTrans, CblasNoTrans,
-        M, N, K,
-        alpha, (double*) A->vec, lda,
-        (double*) B->vec, ldb, beta,
-        (double*) AB->vec, ldc 
-    );
+    if (VEC_TYPE == VEC_FLOAT)
+    {
+        cblas_sgemm ( // Specific for single precision
+            CblasRowMajor, CblasNoTrans, CblasNoTrans,
+            M, N, K,
+            alpha, (float*) A->vec, lda,
+            (float*) B->vec, ldb, beta,
+            (float*) AB->vec, ldc 
+        );
+    }
+    else if (VEC_TYPE == VEC_DOUBLE)
+    {
+        cblas_dgemm ( // Specific for double precision
+            CblasRowMajor, CblasNoTrans, CblasNoTrans,
+            M, N, K,
+            alpha, (double*) A->vec, lda,
+            (double*) B->vec, ldb, beta,
+            (double*) AB->vec, ldc 
+        );
+    }
     
     // "Correcting" Not A Number situations
     for (i = 0; i < AB->m*AB->n; i++)
