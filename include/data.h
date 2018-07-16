@@ -62,9 +62,9 @@ void dat_import_labels         (const char* labels_file);
 void dat_import_features_array (vec_type_t** features_arr, int rows, int columns);
 void dat_import_labels_array   (vec_type_t** labels_arr, int rows, int columns);
 
-void   dat_shuffle    (dataset_t* data);
-void   dat_repeat     (dataset_t* data);
-vec_t* dat_next_batch (dataset_t* data);
+void         dat_shuffle        (dataset_t* data);
+void         dat_repeat         (dataset_t* data);
+minibatch_t* dat_next_minibatch (dataset_t* data);
 //-----------------------------------------------------------------------------
 
 // Specific data representations interface ------------------------------------
@@ -79,6 +79,8 @@ vec_type_t** dat_get_lines_representation_1 (
 dataset_t* dat_get_dataset_from_representation_1(
     const char* linesfile, const char* labelsfile
 );
+
+void dat_print_vec_lines (vec_t* data);
 //-----------------------------------------------------------------------------
 
 

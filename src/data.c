@@ -252,7 +252,7 @@ vec_type_t** dat_get_lines_representation_1 (
         {
             vec_type_t val = 0;
             if (j < len)
-                val = ((vec_type_t) lines[i][j]) / NORM_UCHAR;
+                val = ((vec_type_t) lines[i][j]) / 1.0;//NORM_UCHAR;
             vecs[i][j] = val;
         }
     }
@@ -304,4 +304,20 @@ dataset_t* dat_get_dataset_from_representation_1 (
     txt_free_ulines(&labels, num_lines);
 
     return dataset;
+}
+
+
+
+void dat_print_vec_lines (vec_t* data)
+{
+    int i, j;
+
+    for (i = 0; i < data->m; i++)
+    {
+        for (j = 0; j < data->n; j++)
+        {
+            printf("%c", (char) vec_get(data, i, j));
+        }
+        printf("\n");
+    }
 }

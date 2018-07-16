@@ -923,8 +923,10 @@ void vec_dot (vec_t* A, vec_t* B, vec_t* AB)
         cblas_sgemm ( // Specific for single precision
             CblasRowMajor, CblasNoTrans, CblasNoTrans,
             M, N, K,
-            alpha, (float*) A->vec, lda,
-            (float*) B->vec, ldb, beta,
+            (float) alpha, 
+            (float*) A->vec, lda,
+            (float*) B->vec, ldb, 
+            (float) beta,
             (float*) AB->vec, ldc 
         );
     }
@@ -933,8 +935,10 @@ void vec_dot (vec_t* A, vec_t* B, vec_t* AB)
         cblas_dgemm ( // Specific for double precision
             CblasRowMajor, CblasNoTrans, CblasNoTrans,
             M, N, K,
-            alpha, (double*) A->vec, lda,
-            (double*) B->vec, ldb, beta,
+            (double) alpha, 
+            (double*) A->vec, lda,
+            (double*) B->vec, ldb, 
+            (double) beta,
             (double*) AB->vec, ldc 
         );
     }
@@ -942,7 +946,7 @@ void vec_dot (vec_t* A, vec_t* B, vec_t* AB)
     // "Correcting" Not A Number situations
     for (i = 0; i < AB->m*AB->n; i++)
         if (isnan(AB->vec[i]))
-            AB->vec[i] = 0;
+            AB->vec[i] = (vec_type_t) 0;
 }
 
 void vec_mult (vec_t* A, vec_t* B, vec_t* AB)
@@ -1009,8 +1013,10 @@ vec_t* vec_get_dot (vec_t* A, vec_t* B)
         cblas_sgemm ( // Specific for single precision
             CblasRowMajor, CblasNoTrans, CblasNoTrans,
             M, N, K,
-            alpha, (float*) A->vec, lda,
-            (float*) B->vec, ldb, beta,
+            (float) alpha, 
+            (float*) A->vec, lda,
+            (float*) B->vec, ldb, 
+            (float) beta,
             (float*) AB->vec, ldc 
         );
     }
@@ -1019,8 +1025,10 @@ vec_t* vec_get_dot (vec_t* A, vec_t* B)
         cblas_dgemm ( // Specific for double precision
             CblasRowMajor, CblasNoTrans, CblasNoTrans,
             M, N, K,
-            alpha, (double*) A->vec, lda,
-            (double*) B->vec, ldb, beta,
+            (double) alpha, 
+            (double*) A->vec, lda,
+            (double*) B->vec, ldb, 
+            (double) beta,
             (double*) AB->vec, ldc 
         );
     }
@@ -1028,7 +1036,7 @@ vec_t* vec_get_dot (vec_t* A, vec_t* B)
     // "Correcting" Not A Number situations
     for (i = 0; i < AB->m*AB->n; i++)
         if (isnan(AB->vec[i]))
-            AB->vec[i] = 0.0;
+            AB->vec[i] = (vec_type_t) 0.0;
 
     return AB;
 }

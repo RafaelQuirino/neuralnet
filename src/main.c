@@ -71,5 +71,22 @@ int main (int argc, char** argv)
     // }
 
 
+
+    minibatch_t* minibatch;
+
+    minibatch = dat_next_minibatch(dataset);
+    minibatch = dat_next_minibatch(dataset);
+    minibatch = dat_next_minibatch(dataset);
+    minibatch = dat_next_minibatch(dataset);
+    minibatch = dat_next_minibatch(dataset);
+    minibatch = dat_next_minibatch(dataset);
+    minibatch = dat_next_minibatch(dataset);
+    minibatch = dat_next_minibatch(dataset);
+    minibatch = dat_next_minibatch(dataset);
+
+    printf("%d, %d, %d\n", 
+        dataset->row_offset, dataset->current_batch+1, dataset->current_epoch+1);
+
+
     return 0;
 }
