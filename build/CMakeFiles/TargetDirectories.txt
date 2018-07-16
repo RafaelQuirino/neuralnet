@@ -1,3 +1,0 @@
-/home/rafael/Documents/workspace/neural_net/build/CMakeFiles/rebuild_cache.dir
-/home/rafael/Documents/workspace/neural_net/build/CMakeFiles/edit_cache.dir
-/home/rafael/Documents/workspace/neural_net/build/CMakeFiles/nn.dir
