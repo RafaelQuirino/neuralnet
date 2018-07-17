@@ -150,6 +150,15 @@ minibatch_t* dat_next_minibatch (dataset_t* data)
 
 
 
+void dat_free_minibatch (minibatch_t** minibatch)
+{
+    vec_free(&(*minibatch)->X);
+    vec_free(&(*minibatch)->Y);
+    free(*minibatch);
+}
+
+
+
 //=============================================================================
 
 

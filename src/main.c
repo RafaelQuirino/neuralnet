@@ -60,32 +60,24 @@ int main (int argc, char** argv)
 
     dataset_t* dataset = dat_get_dataset_from_representation_1(file, labels);
 
-    // for (i = 0; i < dataset->size; i++) {
-    //     for (j = 0; j < dataset->Y->columns; j++)
-    //         printf("[%g]", vec_get(dataset->Y, i, j));
-    //     printf(": ");
-    //     for (j = 0; j < 12; j++)
-    //     // for (j = 127; j >= 115; j--)
-    //         printf("[%g]", vec_get(dataset->X, i, j));
-    //     printf("\n\n");
-    // }
-
-
-
     minibatch_t* minibatch;
 
-    minibatch = dat_next_minibatch(dataset);
-    minibatch = dat_next_minibatch(dataset);
-    minibatch = dat_next_minibatch(dataset);
-    minibatch = dat_next_minibatch(dataset);
-    minibatch = dat_next_minibatch(dataset);
-    minibatch = dat_next_minibatch(dataset);
-    minibatch = dat_next_minibatch(dataset);
-    minibatch = dat_next_minibatch(dataset);
+    minibatch = dat_next_minibatch(dataset); dat_free_minibatch(&minibatch);
+    minibatch = dat_next_minibatch(dataset); dat_free_minibatch(&minibatch);
+    minibatch = dat_next_minibatch(dataset); dat_free_minibatch(&minibatch);
+    minibatch = dat_next_minibatch(dataset); dat_free_minibatch(&minibatch);
+    minibatch = dat_next_minibatch(dataset); dat_free_minibatch(&minibatch);
+    minibatch = dat_next_minibatch(dataset); dat_free_minibatch(&minibatch);
+    minibatch = dat_next_minibatch(dataset); dat_free_minibatch(&minibatch);
+    minibatch = dat_next_minibatch(dataset); dat_free_minibatch(&minibatch);
     minibatch = dat_next_minibatch(dataset);
 
     printf("%d, %d, %d\n", 
-        dataset->row_offset, dataset->current_batch+1, dataset->current_epoch+1);
+        dataset->row_offset, dataset->current_batch+1, dataset->current_epoch+1
+    );
+
+    printf("%lu\n", sizeof(double));
+
 
 
     return 0;

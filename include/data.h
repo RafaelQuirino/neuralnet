@@ -65,6 +65,7 @@ void dat_import_labels_array   (vec_type_t** labels_arr, int rows, int columns);
 void         dat_shuffle        (dataset_t* data);
 void         dat_repeat         (dataset_t* data);
 minibatch_t* dat_next_minibatch (dataset_t* data);
+void         dat_free_minibatch (minibatch_t** minibatch);
 //-----------------------------------------------------------------------------
 
 // Specific data representations interface ------------------------------------

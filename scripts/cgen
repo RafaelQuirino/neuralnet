@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ROOT="/home/rafael/Documents/workspace/neural_net"
+ROOT="/home/rafael/Documents/workspace/github/neuralnet"
 
 HDIR="${ROOT}/include"
 CDIR="${ROOT}/src"
