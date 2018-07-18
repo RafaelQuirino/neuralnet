@@ -420,10 +420,11 @@ vec_t* nn_forward (neuralnet_t* nn, vec_t* data)
 	// to be the data (input for first layer)
 	vec_t* layerInput = data;
 
-	//--------------------------------------
+	//------------------------------------------------
 	// Now, for each layer but the first...
 	// (input layer is not really a layer)
-	//--------------------------------------
+	// Obs.: Z[0] represent activities in layer 1...
+	//------------------------------------------------
 	for (i = 0; i < nn->nlayers-1; i++) 
 	{	
 		//-------------------------------------
