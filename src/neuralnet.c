@@ -916,8 +916,8 @@ void nn_backpropagation_2 (
 			vec_apply(newVdB, vec_sqrt_op);
 
 			vec_div_elwise(dJdB, newVdB, dJdB);
-            vec_mult_scalar(dJdB, learning_rate);
-            vec_sub(nn->B[j], dJdB, nn->B[j]);
+			vec_mult_scalar(dJdB, learning_rate);
+			vec_sub(nn->B[j], dJdB, nn->B[j]);
 
 			//Freeing memory
 			vec_free(&dJdBsquared);
