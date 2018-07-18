@@ -62,7 +62,7 @@ void         vec_set     (vec_t* vec, int i, int j, vec_type_t k);
 void         vec_set_all (vec_t* vec, vec_type_t k);
 
 // For use with functions that generate some value like random numbers
-void vec_set_all_func (vec_t* vec, vec_type_t(*funcptr)(void));
+void vec_set_all_func (vec_t* vec, double(*funcptr)());
 
 //-----------------------------------------------------------------------------
 // TODO

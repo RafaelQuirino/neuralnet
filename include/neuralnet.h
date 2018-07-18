@@ -10,15 +10,52 @@ extern "C" {
 #include <string.h>
 
 #include "../include/util.h"
+#include "../include/data.h"
 #include "../include/linalg.h"
+
+
+
+//---------------------------------------------------------
+// Defining types of loss and cost functions
+//---------------------------------------------------------
+#define NN_SQUARE_ERROR              0
+#define NN_CROSS_ENTROPY             1
+#define NN_MEAN_SQUARE_ERROR         2
+#define NN_LOGISTIC_REGRESSION       3
+#define NN_NEGATIVE_LOG_LIKELIHOOD   4
+#define NN_CATEGORICAL_CROSS_ENTROPY 5
+//---------------------------------------------------------
+
+//---------------------------------------------------------
+// Defining types of activation functions
+//---------------------------------------------------------
+#define NN_IDENTITY_ACTIVATION           0
+#define NN_RELU_ACTIVATION               1
+#define NN_SIGMOID_ACTIVATION            2
+#define NN_SOFTMAX_ACTIVATION            3
+#define NN_HYPERBOLIC_TANGENT_ACTIVATION 4
+//---------------------------------------------------------
+
+//---------------------------------------------------------
+// Defining types of regularization
+//---------------------------------------------------------
+#define NN_NO_REGULARIZATION        0
+#define NN_L1_REGULARIZATION        1
+#define NN_L2_REGULARIZATION        2
+#define NN_DROPOUT_REGULARIZATION   3
+#define NN_FROBENIUS_REGULARIZATION 4
+//---------------------------------------------------------
 
 
 
 typedef struct 
 {
     // Network topology
-    int* topology;
-    int nlayers;
+    // (1st layer is only input, no activation or dropout)
+    int*   topology;    // Each layer's # of hidden units
+    int*   activations; // Each layer's activation function
+    float* keep_probs;  // Each layer's chance of dropout
+    int    nlayers;     // # of layers
 
     //-----------------------------------------------------
     // Arrays of vec_t* (matrices from linear_algebra.h)
@@ -28,8 +65,7 @@ typedef struct
     // VdW: represents the "velocities" for weights 
     // VdB: represents the "velocities" for biases 
     vec_t **W, **VdW;
-    vec_t **B, **VdB; // Actually, Arrays of vectors
-                      // (vec_t's of the type 1 x n)
+    vec_t **B, **VdB;
 
     // Arrays of activities (Z) and activations (A),
     // where activities are the sums of stimuli in each 
@@ -41,14 +77,32 @@ typedef struct
     vec_t *yHat;
     //-------------------------------------------------------
 
+    // Hyper-parameters
+    float learning_rate;
+    float momentum;
+    float keep_prob;
+
+    // Flags
+    int regularization;
+    int input_normalization;
+
 } neuralnet_t;
 
 
 
-neuralnet_t* nn_new    (int topology[], int tsize, vec_type_t (*func)());
+// Common "CRUD" functions
+neuralnet_t* nn_new    (int topology[], int tsize, double (*func)());
 void         nn_free   (neuralnet_t** nn);
 void         nn_export (neuralnet_t* nn, const char* fname);
 neuralnet_t* nn_import (const char* fname);
+
+// Configuring neuralnet's mechanism parameters
+void nn_set_cost_function    (neuralnet_t* nn, int cost_func_code);
+void nn_set_layer_activation (neuralnet_t* nn, int layeridx, int act_func_code);
+
+// Main interface
+void nn_train (neuralnet_t* nn, dataset_t* data);
+void nn_test  (neuralnet_t* nn, dataset_t* data);
 
 // Run the network, saving all activities (Z) and activation (A) matrices
 // for the backpropagation to work.

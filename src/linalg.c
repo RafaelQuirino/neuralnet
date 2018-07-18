@@ -185,7 +185,7 @@ void vec_set_all (vec_t* vec, vec_type_t k)
             vec_set(vec, i, j, k);
 }
 
-void vec_set_all_func (vec_t* vec, vec_type_t(*funcptr)(void))
+void vec_set_all_func (vec_t* vec, double(*funcptr)())
 {
     int line = __LINE__ - 2;
     if (vec == NULL)
@@ -200,7 +200,7 @@ void vec_set_all_func (vec_t* vec, vec_type_t(*funcptr)(void))
 
     for (i = 0; i < vec->m; i++)
         for (j = 0; j < vec->n; j++)
-            vec_set(vec, i, j, funcptr());
+            vec_set(vec, i, j, (vec_type_t) funcptr());
 }
 
 //TODO

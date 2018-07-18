@@ -73,7 +73,7 @@ ut_sysinfo_t* ut_get_sysinfo ()
     static char flag = 0;
     static struct sysinfo info;
 
-    if (!flag)
+    if (TRUE || !flag) // This really must be called every time...
     {
         status = sysinfo(&info);
         line = __LINE__ - 1;
@@ -119,4 +119,48 @@ void ut_errmsg (const char* msg, const char* file, int line, int stop)
     {
         exit(1);
     }
+}
+
+
+
+double ut_gaussian_noise (double mu, double sigma)
+{
+	static int generateGaussianNoise_seeded = 0;
+	if (generateGaussianNoise_seeded == 0) 
+    {
+        srand(time(NULL));
+        generateGaussianNoise_seeded = 1;
+	}
+
+	static const double epsilon = DBL_MIN;//std::numeric_limits<double>::min();
+	static const double two_pi = 2.0*3.14159265358979323846;
+
+	//thread_local double z0, z1;
+	double z0, z1;
+	//thread_local bool generate;
+	//bool generate;
+	char generate;
+	generate = !generate;
+
+	if (!generate)
+        return z1 * sigma + mu;
+
+	double u1, u2;
+	do
+    {
+        u1 = rand() * (1.0 / RAND_MAX);
+        u2 = rand() * (1.0 / RAND_MAX);
+    }
+	while ( u1 <= epsilon );
+
+	z0 = sqrt(-2.0 * log(u1)) * cos(two_pi * u2);
+	z1 = sqrt(-2.0 * log(u1)) * sin(two_pi * u2);
+	return z0 * sigma + mu;
+}
+
+
+
+double ut_gaussian_rand()
+{
+	return ut_gaussian_noise(0,1);
 }

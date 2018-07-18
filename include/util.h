@@ -6,10 +6,12 @@ extern "C" {
 
 #include <math.h>
 #include <time.h>
+#include <float.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
+#include <limits.h>
+#include <unistd.h>
 #include <inttypes.h>
 #include <sys/sysinfo.h> // Linux
 
@@ -54,6 +56,9 @@ double        ut_interval_in_ms   (unsigned long t0, unsigned long t1);
 ut_sysinfo_t* ut_get_sysinfo      ();
 
 void ut_errmsg (const char* msg, const char* file, int line, int stop);
+
+double ut_gaussian_noise (double mu, double sigma);
+double ut_gaussian_rand  ();
 
 
 

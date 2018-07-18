@@ -2,7 +2,7 @@
 
 
 
-neuralnet_t* nn_new (int topology[], int tsize, vec_type_t (*func)())
+neuralnet_t* nn_new (int topology[], int tsize, double (*func)())
 {
 	// Obs.: "func" is a pointer to a function
 	// that generates some value (like gaussian random numbers...).
@@ -365,6 +365,27 @@ neuralnet_t* nn_import (const char* fname)
 	fclose(fp);
 
 	return nn;
+}
+
+
+
+void nn_set_cost_function (neuralnet_t* nn, int cost_func_code)
+{
+
+}
+
+
+
+void nn_set_output_function (neuralnet_t* nn, int output_func_code)
+{
+
+}
+
+
+
+void nn_set_layer_activation (neuralnet_t* nn, int layeridx, int act_func_code)
+{
+
 }
 
 
@@ -762,54 +783,21 @@ void nn_backpropagation_2 (
 
 	// Parameters
 	double momentum = 0.9;
-	int batch_size = 128;
-	int curr_batch = 0;
-	vec_t *batchX = NULL, *batchY = NULL;
 
 	// For each iteration of backpropagation
 	for (i = 0; i < num_iterations; i++) 
 	{
-		// Creating mini-batch ----------------------------------------------------------
-		vec_free(&batchX);
-		vec_free(&batchY);
-		int batch_row;
-
-		int limitX = curr_batch + batch_size < X->m ? curr_batch + batch_size : X->m;
-		batchX = vec_new(batch_size, X->n);
-		batch_row = 0;
-		for (k = curr_batch; k < limitX; k++) {
-			for (j = 0; j < X->n; j++) {
-				vec_set(batchX, batch_row, j, vec_get(X,k,j));
-			}
-			batch_row++;
-		}
-
-		batch_row = 0;
-		int limitY = curr_batch + batch_size < Y->m ? curr_batch + batch_size : Y->m;
-		batchY = vec_new(batch_size, Y->n);
-		for (k = curr_batch; k < limitY; k++) {
-			for (j = 0; j < Y->n; j++) {
-				vec_set(batchY, batch_row, j, vec_get(Y,k,j));
-			}
-			batch_row++;
-		}
-
-		curr_batch += batch_size;
-		if (curr_batch >= X->m)
-			curr_batch = 0;
-		//-------------------------------------------------------------------------------
-
 		// First of all, forward the data
 		// and get the net's output (yHat)
 		// (also nn->Z[i] and nn->A[i] matrices)
 		vec_free(&nn->yHat);
-		nn->yHat = nn_forward(nn, batchX);
+		nn->yHat = nn_forward(nn,X);
 
 		//-----------------------------------------------------
 		// CALCULATE THE COST FOR OUTPUT
 		//-----------------------------------------------------
 		// (y - yHat) ^ 2
-		vec_t* y_yHat_tmp = vec_get_diff(batchY,nn->yHat);
+		vec_t* y_yHat_tmp = vec_get_diff(Y,nn->yHat);
 
 		vec_apply(y_yHat_tmp, vec_square_op);
 		double cost = 0.5 * vec_inner_sum(y_yHat_tmp);
@@ -828,12 +816,12 @@ void nn_backpropagation_2 (
 		vec_t* dJdB;
 
 		// First error signal, -(y - yHat)
-		vec_t* _y_yHat = vec_get_diff(batchY,nn->yHat);
+		vec_t* _y_yHat = vec_get_diff(Y,nn->yHat);
 		vec_mult_scalar(_y_yHat,-1.0);
 		vec_t* errsign = _y_yHat;
 
 		// First activation matrix (Xt)
-		vec_t* Xt = vec_transposed(batchX);
+		vec_t* Xt = vec_transposed(X);
 		
 		// Loop variables
 		vec_t* act        = NULL;
