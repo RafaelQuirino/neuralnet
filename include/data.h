@@ -16,6 +16,17 @@ static const vec_type_t NORM_UCHAR = (vec_type_t) UCHAR_MAX;
 
 
 
+//---------------------------------------------------------
+// Defining types of data preprocessing
+//---------------------------------------------------------
+#define DAT_MEAN_SUBTRACTION 0
+#define DAT_NORMALIZATION    1
+#define DAT_DECORRELATION    2
+#define DAT_WHITENING        3
+//---------------------------------------------------------
+
+
+
 typedef struct
 {
     // Data

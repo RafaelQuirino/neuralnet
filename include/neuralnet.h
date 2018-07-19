@@ -16,14 +16,30 @@ extern "C" {
 
 
 //---------------------------------------------------------
+// Defining types weight initialization
+//---------------------------------------------------------
+#define NN_WINIT_RANDOM                0
+#define NN_WINIT_GAUSSIAN              1
+#define NN_WINIT_VARIANCE_CALLIBRATION 2
+#define NN_BINIT_ONE                   3
+#define NN_BINIT_ZERO                  4
+#define NN_BINIT_SMALL                 5
+#define NN_BINIT_RANDOM                6
+#define NN_BINIT_GAUSSIAN              7
+//---------------------------------------------------------
+
+//---------------------------------------------------------
 // Defining types of loss and cost functions
 //---------------------------------------------------------
 #define NN_SQUARE_ERROR              0
 #define NN_CROSS_ENTROPY             1
 #define NN_MEAN_SQUARE_ERROR         2
-#define NN_LOGISTIC_REGRESSION       3
-#define NN_NEGATIVE_LOG_LIKELIHOOD   4
-#define NN_CATEGORICAL_CROSS_ENTROPY 5
+#define NN_HALF_SQUARE_ERROR         3
+#define NN_BINAR_CROSS_ENTROPY       4
+#define NN_LOGISTIC_REGRESSION       5
+#define NN_HALF_MEAN_SQUARE_ERROR    6
+#define NN_NEGATIVE_LOG_LIKELIHOOD   7
+#define NN_CATEGORICAL_CROSS_ENTROPY 8
 //---------------------------------------------------------
 
 //---------------------------------------------------------
@@ -81,6 +97,7 @@ typedef struct
     float learning_rate;
     float momentum;
     float keep_prob;
+    int   cost_function;
 
     // Flags
     int regularization;
@@ -119,6 +136,10 @@ vec_type_t nn_cost_func_prime (
 	vec_t*** dJdWs_out, vec_t*** dJdBs_out
 );
 
+vec_type_t nn_activation_func ();
+
+vec_type_t nn_activation_func_prime ();
+
 void nn_backpropagation (
 	neuralnet_t* nn, vec_t* X, vec_t* Y, 
 	int num_iterations,
@@ -140,6 +161,9 @@ void nn_backpropagation_2 (
 // Specific math functions --------------------------------
 vec_type_t nn_sigmoid       (vec_type_t k);
 vec_type_t nn_sigmoid_prime (vec_type_t k);
+
+vec_type_t nn_relu       (vec_type_t k);
+vec_type_t nn_relu_prime (vec_type_t k);
 //---------------------------------------------------------
 
 
