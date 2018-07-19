@@ -64,14 +64,31 @@ extern "C" {
 
 
 
+//---------------------------------------------------------
+// Defining common flags
+//---------------------------------------------------------
+#define NN_ACTIVATION       0
+#define NN_ACTIVATION_PRIME 1
+//---------------------------------------------------------
+
+
+
+// Probably won't use this...
+typedef vec_type_t (*activation_t)(vec_type_t);
+
+
+
 typedef struct 
 {
     // Network topology
     // (1st layer is only input, no activation or dropout)
     int*   topology;    // Each layer's # of hidden units
-    int*   activations; // Each layer's activation function
-    float* keep_probs;  // Each layer's chance of dropout
     int    nlayers;     // # of layers
+
+    // Array of function pointers (activation functions),
+    // one for each layer in the network
+    // activation_t* activations;
+    int* activations; // Let's just use flags...
 
     //-----------------------------------------------------
     // Arrays of vec_t* (matrices from linear_algebra.h)
@@ -101,7 +118,6 @@ typedef struct
 
     // Flags
     int regularization;
-    int input_normalization;
 
 } neuralnet_t;
 
@@ -136,10 +152,6 @@ vec_type_t nn_cost_func_prime (
 	vec_t*** dJdWs_out, vec_t*** dJdBs_out
 );
 
-vec_type_t nn_activation_func ();
-
-vec_type_t nn_activation_func_prime ();
-
 void nn_backpropagation (
 	neuralnet_t* nn, vec_t* X, vec_t* Y, 
 	int num_iterations,
@@ -150,20 +162,27 @@ void nn_backpropagation (
 // Calculate gradients from last to first layer,
 // use it to update weights and free them before
 // going one layer back (thus saving memory)
-void nn_backpropagation_2 (
+void nn_backpropagation_mem (
 	neuralnet_t* nn, vec_t* X, vec_t* Y, 
 	int num_iterations,
 	vec_type_t learning_rate
 );
 
-
+vec_type_t nn_activation_func (vec_type_t k, activation_t func, int flag);
+vec_type_t nn_activation_func_prime (vec_type_t k, activation_t func, int flag);
 
 // Specific math functions --------------------------------
-vec_type_t nn_sigmoid       (vec_type_t k);
-vec_type_t nn_sigmoid_prime (vec_type_t k);
+vec_type_t nn_identity                (vec_type_t k);
+vec_type_t nn_identity_prime          (vec_type_t k);
 
-vec_type_t nn_relu       (vec_type_t k);
-vec_type_t nn_relu_prime (vec_type_t k);
+vec_type_t nn_relu                    (vec_type_t k);
+vec_type_t nn_relu_prime              (vec_type_t k);
+
+vec_type_t nn_sigmoid                 (vec_type_t k);
+vec_type_t nn_sigmoid_prime           (vec_type_t k);
+
+vec_type_t nn_hyperbolic_tangent       (vec_type_t k);
+vec_type_t nn_hyperbolic_tangent_prime (vec_type_t k);
 //---------------------------------------------------------
 
 

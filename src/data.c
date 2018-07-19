@@ -261,7 +261,7 @@ vec_type_t** dat_get_lines_representation_1 (
         {
             vec_type_t val = 0;
             if (j < len)
-                val = ((vec_type_t) lines[i][j]) / 1.0;//NORM_UCHAR;
+                val = ((vec_type_t) lines[i][j]) / NORM_UCHAR;
             vecs[i][j] = val;
         }
     }

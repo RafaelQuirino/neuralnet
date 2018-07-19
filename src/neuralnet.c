@@ -149,6 +149,25 @@ neuralnet_t* nn_new (int topology[], int tsize, double (*func)())
 
 	newnet->yHat = NULL;
 
+	// Creating activation functions
+	newnet->activations = NULL;
+	newnet->activations = (int*) malloc ((tsize-1) * sizeof(int));
+	line = __LINE__ - 1;
+	if (!newnet->activations)
+	{
+		ut_errmsg (
+			"Couldnot allocate memory for the activations.",
+			__FILE__, line, 1
+		);
+	}
+
+	for (i = 0; i < (tsize-1)-1; i++)
+		newnet->activations[i] = NN_RELU_ACTIVATION;
+		// newnet->activations[i] = NN_SIGMOID_ACTIVATION;
+		
+	// Output layer's activation
+	newnet->activations[(tsize-1)-1] = NN_SIGMOID_ACTIVATION;
+
 	return 	newnet;
 }
 
@@ -773,7 +792,7 @@ void nn_backpropagation (
 // avoid calculating all gradients from all layers before the
 // weights update. Now we only have to calculate the gradients
 // for the current layer being processed, thus saving memory.
-void nn_backpropagation_2 (
+void nn_backpropagation_mem (
 	neuralnet_t* nn, vec_t* X, vec_t* Y, 
 	int num_iterations,
 	vec_type_t learning_rate
@@ -936,15 +955,68 @@ void nn_backpropagation_2 (
 
 
 
-// SIGMOID ACTIVATION -------------------------------------
-vec_type_t nn_sigmoid (vec_type_t k)
+vec_type_t nn_activation_func (vec_type_t k, activation_t func, int flag)
 {
-	return 1/(1+exp(-k));
+	vec_type_t result;
+
+	if (flag == NN_IDENTITY_ACTIVATION)
+	{
+		result = nn_identity(k);
+	}
+	else if (flag == NN_RELU_ACTIVATION)
+	{
+		result = nn_relu(k);
+	}
+	else if (flag == NN_SIGMOID_ACTIVATION)
+	{
+		result = nn_sigmoid(k);
+	}
+	else if (flag == NN_HYPERBOLIC_TANGENT_ACTIVATION)
+	{
+		result = nn_hyperbolic_tangent(k);
+	}
+
+	return (vec_type_t) result;
 }
 
-vec_type_t nn_sigmoid_prime (vec_type_t k)
+vec_type_t nn_activation_func_prime (vec_type_t k, activation_t func, int flag)
 {
-	return exp(-k) / pow(1+exp(-k),2);
+	vec_type_t result;
+
+	if (flag == NN_IDENTITY_ACTIVATION)
+	{
+		result = nn_identity_prime(k);
+	}
+	else if (flag == NN_RELU_ACTIVATION)
+	{
+		result = nn_relu_prime(k);
+	}
+	else if (flag == NN_SIGMOID_ACTIVATION)
+	{
+		result = nn_sigmoid_prime(k);
+	}
+	else if (flag == NN_HYPERBOLIC_TANGENT_ACTIVATION)
+	{
+		result = nn_hyperbolic_tangent_prime(k);
+	}
+
+	return (vec_type_t) result;
+}
+
+
+
+// IDENTITY ACTIVATION ------------------------------------
+vec_type_t nn_identity (vec_type_t k)
+{
+	double x = (double) k;
+	return fmax(0.0,x);
+}
+
+vec_type_t nn_identity_prime (vec_type_t k)
+{
+	double x = (double) k;
+	double y = 1.0;
+	return (vec_type_t) y;
 }
 //---------------------------------------------------------
 
@@ -953,11 +1025,51 @@ vec_type_t nn_sigmoid_prime (vec_type_t k)
 // ReLU ACTIVATION ----------------------------------------
 vec_type_t nn_relu (vec_type_t k)
 {
-	return fmax((double) 0, (double) k);
+	double x = (double) k;
+	double y = fmax(0.0,x);
+	return (vec_type_t) y;
 }
 
 vec_type_t nn_relu_prime (vec_type_t k)
 {
-	return k > 0 ? 1 : 0;
+	double x = (double) k;
+	double y = k > 0 ? 1 : 0;
+	return (vec_type_t) y;
+}
+//---------------------------------------------------------
+
+
+
+// SIGMOID ACTIVATION -------------------------------------
+vec_type_t nn_sigmoid (vec_type_t k)
+{
+	double x = (double) k;
+	double y = 1/(1+exp(-x));
+	return (vec_type_t) y;
+}
+
+vec_type_t nn_sigmoid_prime (vec_type_t k)
+{
+	double x = (double) k;
+	double y = exp(-x) / pow(1+exp(-x),2);
+	return (vec_type_t) y;
+}
+//---------------------------------------------------------
+
+
+
+// HYPERBOLIC TANGENT ACTIVATION --------------------------
+vec_type_t nn_hyperbolic_tangent (vec_type_t k)
+{
+	double x = (double) k;
+	double y = (exp(x)-exp(-x))/(exp(x)+exp(-x));
+	return (vec_type_t) y;
+}
+
+vec_type_t nn_hyperbolic_tangent_prime (vec_type_t k)
+{
+	double x = (double) k;
+	double y = 1 - pow(tanh(x),2);
+	return (vec_type_t) y;
 }
 //---------------------------------------------------------
