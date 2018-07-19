@@ -936,14 +936,28 @@ void nn_backpropagation_2 (
 
 
 
+// SIGMOID ACTIVATION -------------------------------------
 vec_type_t nn_sigmoid (vec_type_t k)
 {
 	return 1/(1+exp(-k));
 }
 
-
-
 vec_type_t nn_sigmoid_prime (vec_type_t k)
 {
 	return exp(-k) / pow(1+exp(-k),2);
 }
+//---------------------------------------------------------
+
+
+
+// ReLU ACTIVATION ----------------------------------------
+vec_type_t nn_relu (vec_type_t k)
+{
+	return fmax((double) 0, (double) k);
+}
+
+vec_type_t nn_relu_prime (vec_type_t k)
+{
+	return k > 0 ? 1 : 0;
+}
+//---------------------------------------------------------
