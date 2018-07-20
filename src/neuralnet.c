@@ -660,7 +660,7 @@ vec_t* nn_cost_func_gradient (
 		vec_sub(y, nn->yHat, grads);
 		vec_mult_scalar(grads,-(1/(vec_type_t)y->m));
 	}
-	// J = -1/n * Sum()
+	// J = -1/n * Sum{y/yHat + (1-y)/(1-yHat)}
 	else if (funcflag == NN_BINARY_CROSS_ENTROPY)
 	{
 		// aux1 := (1-y)/(1-yHat)
