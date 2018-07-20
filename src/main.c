@@ -46,29 +46,29 @@ int main (int argc, char** argv)
 
 
 
-    // Testing linalg.h
-    vec_t* A = vec_new(1,5);
-    vec_t* B = vec_new(5,4);
-    vec_set_all(A,1);
-    vec_set_all(B,3);
-    vec_print(A);
-    vec_print(B);
+    // // Testing linalg.h
+    // vec_t* A = vec_new(1,5);
+    // vec_t* B = vec_new(5,4);
+    // vec_set_all(A,1);
+    // vec_set_all(B,3);
+    // vec_print(A);
+    // vec_print(B);
 
-    vec_t* AB = vec_get_dot(A,B);
-    vec_print(AB);
+    // vec_t* AB = vec_get_dot(A,B);
+    // vec_print(AB);
 
-    vec_set_row(B, 0, 1);
-    vec_set_row(B, 1, 2);
-    vec_set_row(B, 2, 3);
-    vec_set_row(B, 3, 4);
-    vec_set_row(B, 4, 5);
-    vec_print(B);
+    // vec_set_row(B, 0, 1);
+    // vec_set_row(B, 1, 2);
+    // vec_set_row(B, 2, 3);
+    // vec_set_row(B, 3, 4);
+    // vec_set_row(B, 4, 5);
+    // vec_print(B);
 
-    vec_t* C = vec_clone_portion(B, 1, 3);
-    vec_print(C);
+    // vec_t* C = vec_clone_portion(B, 1, 3);
+    // vec_print(C);
 
-    vec_t* D = vec_clone_portion_circ(B, 2, 9);
-    vec_print(D);
+    // vec_t* D = vec_clone_portion_circ(B, 2, 9);
+    // vec_print(D);
 
 
 
@@ -94,7 +94,7 @@ int main (int argc, char** argv)
     //-------------------------------------------------------------------------
 	// Testing neural_net.h
 	//-------------------------------------------------------------------------
-    int num_layers = 4;
+    int num_layers = 3;
     vec_type_t learning_rate = 0.001;
 
 	if (mode == NET_TRAIN_MODE)

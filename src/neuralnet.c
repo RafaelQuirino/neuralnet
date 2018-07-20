@@ -162,11 +162,19 @@ neuralnet_t* nn_new (int topology[], int tsize, double (*func)())
 	}
 
 	for (i = 0; i < (tsize-1)-1; i++)
-		newnet->activations[i] = NN_RELU_ACTIVATION;
-		// newnet->activations[i] = NN_SIGMOID_ACTIVATION;
-		
+	{
+		// newnet->activations[i] = NN_IDENTITY_ACTIVATION;
+		// newnet->activations[i] = NN_RELU_ACTIVATION;
+		newnet->activations[i] = NN_SIGMOID_ACTIVATION;
+		// newnet->activations[i] = NN_HYPERBOLIC_TANGENT_ACTIVATION;
+	}
 	// Output layer's activation
 	newnet->activations[(tsize-1)-1] = NN_SIGMOID_ACTIVATION;
+
+	// newnet->cost_function = NN_SQUARE_ERROR;
+	newnet->cost_function = NN_HALF_SQUARE_ERROR;
+	// newnet->cost_function = NN_MEAN_SQUARE_ERROR;
+	// newnet->cost_function = NN_CROSS_ENTROPY;
 
 	return 	newnet;
 }
@@ -451,15 +459,19 @@ vec_t* nn_forward (neuralnet_t* nn, vec_t* data)
 		//-------------------------------------
 
 		// First, Z[i] = layerInput * nn->W[i]
-		nn->Z[i] = vec_get_dot (layerInput, nn->W[i]);
+		nn->Z[i] = vec_get_dot(layerInput, nn->W[i]);
 		
 		// Then add bias, Z[i][row] = Z[i][row] + B[i], for each row
 		for (row = 0; row < nn->Z[i]->m; row++)
-			vec_sum_row (nn->Z[i], row, nn->B[i]->vec);
+			vec_sum_row(nn->Z[i], row, nn->B[i]->vec);
 
 		// Last, make A[i] = fact(Z[i]),
 		// where fact is the activation function
-		nn->A[i] = vec_apply_out (nn->Z[i], nn_sigmoid);
+		// nn->A[i] = vec_apply_out(nn->Z[i], nn_sigmoid);
+		nn->A[i] = vec_apply_out(
+			nn->Z[i], 
+			nn_get_activation(nn->activations[i])
+		);
 
 		// Update the layer input to be
 		// the activation of the previous layer
@@ -518,7 +530,11 @@ vec_t* nn_feed_forward (neuralnet_t* nn, vec_t* data)
 
 		// Last, make Z[i] = fact(Z[i]),
 		// where fact is the activation function
-		vec_apply_to (nn->Z[i], nn->Z[i], nn_sigmoid);
+		// vec_apply_to (nn->Z[i], nn->Z[i], nn_sigmoid);
+		vec_apply_to (
+			nn->Z[i], nn->Z[i], 
+			nn_get_activation(nn->activations[i])
+		);
 
 		// Update the layer input to be
 		// the activation of the previous layer
@@ -540,18 +556,131 @@ vec_t* nn_feed_forward (neuralnet_t* nn, vec_t* data)
 
 
 
-vec_type_t nn_cost_func (neuralnet_t* nn, vec_t* X, vec_t* Y)
+// vec_type_t nn_cost_func (neuralnet_t* nn, vec_t* X, vec_t* Y)
+double nn_cost_func (
+	neuralnet_t* nn, vec_t* y, vec_t* yHat,
+	int funcflag
+)
 {
-	vec_t* yHat = nn_forward(nn,X);
+	// vec_t* yHat = nn_forward(nn,X);
 	
-	// (Y - yHat) ^ 2
-	vec_t* Y_yHat = vec_get_diff(Y,yHat);
-	vec_free(&yHat);
-	vec_apply(Y_yHat, vec_square_op);
-	double cost = 0.5 * vec_inner_sum(Y_yHat);
-	vec_free(&Y_yHat);
+	// // (Y - yHat) ^ 2
+	// vec_t* Y_yHat = vec_get_diff(Y,yHat);
+	// vec_free(&yHat);
+	// vec_apply(Y_yHat, vec_square_op);
+	// double cost = 0.5 * vec_inner_sum(Y_yHat);
+	// vec_free(&Y_yHat);
+
+	double cost = 0.0;
+
+	if (funcflag == NN_SQUARE_ERROR)
+	{
+		vec_t* y_yHat = vec_get_diff(y,yHat);
+		vec_apply(y_yHat, vec_square_op);
+		cost = (1.0) * vec_inner_sum(y_yHat);
+		vec_free(&y_yHat);
+	}
+	else if (funcflag == NN_HALF_SQUARE_ERROR)
+	{
+		vec_t* y_yHat = vec_get_diff(y,yHat);
+		vec_apply(y_yHat, vec_square_op);
+		cost = (1.0/2.0) * vec_inner_sum(y_yHat);
+		vec_free(&y_yHat);
+	}
+	else if (funcflag == NN_MEAN_SQUARE_ERROR)
+	{
+		vec_t* y_yHat = vec_get_diff(y,yHat);
+		vec_apply(y_yHat, vec_square_op);
+		cost = (1.0/(vec_type_t)y->m) * vec_inner_sum(y_yHat);
+		vec_free(&y_yHat);
+	}
+	else if (funcflag == NN_HALF_MEAN_SQUARE_ERROR)
+	{
+		vec_t* y_yHat = vec_get_diff(y,yHat);
+		vec_apply(y_yHat, vec_square_op);
+		cost = (1.0/(2.0*(vec_type_t)y->m)) * vec_inner_sum(y_yHat);
+		vec_free(&y_yHat);
+	}
+	else if (funcflag == NN_CROSS_ENTROPY)
+	{
+		// (1-y)
+		vec_t* aux1 = vec_get_scalar_prod(y,-1);
+		vec_add_scalar(aux1,1);
+		
+		// (1-yHat)
+		vec_t* aux2 = vec_get_scalar_prod(nn->yHat,-1);
+		vec_add_scalar(aux2,1);
+
+		// aux1 := (1-y)ln(1-yHat)
+		vec_apply(aux2,vec_log_op);
+		vec_mult_elwise(aux1, aux2, aux1);
+
+		// yln(yHat)
+		vec_free(&aux2);
+		aux2 = vec_apply_out(yHat,vec_log_op);
+		vec_t* ylnyHat = vec_get_mult_elwise(y,aux2);
+
+		// Sum of yln(yHat) + (1-y)ln(1-yHat)
+		vec_add(ylnyHat,aux1,aux1);
+		cost = (-1.0/(vec_type_t)y->m) * vec_inner_sum(aux1);
+		
+		vec_free(&aux1);
+		vec_free(&ylnyHat);
+	}
 	
 	return cost;
+}
+
+
+
+vec_t* nn_cost_func_gradient (
+    neuralnet_t* nn, vec_t* y, vec_t* yHat,
+	int funcflag
+)
+{
+	vec_t* grads = vec_new(y->m,y->n);
+
+	if (funcflag == NN_SQUARE_ERROR)
+	{
+		vec_sub(y, nn->yHat, grads);
+		vec_mult_scalar(grads,-2);
+	}
+	else if (funcflag == NN_HALF_SQUARE_ERROR)
+	{
+		vec_sub(y, nn->yHat, grads);
+		vec_mult_scalar(grads,-1);
+	}
+	else if (funcflag == NN_MEAN_SQUARE_ERROR)
+	{
+		vec_sub(y, nn->yHat, grads);
+		vec_mult_scalar(grads,-(2/(vec_type_t)y->m));
+	}
+	else if (funcflag == NN_HALF_MEAN_SQUARE_ERROR)
+	{
+		vec_sub(y, nn->yHat, grads);
+		vec_mult_scalar(grads,-(1/(vec_type_t)y->m));
+	}
+	else if (funcflag == NN_CROSS_ENTROPY)
+	{
+		// aux1 := (1-y)/(1-yHat)
+		vec_t* aux1 = vec_get_scalar_prod(y,-1);
+		vec_t* aux2 = vec_get_scalar_prod(nn->yHat,-1);
+		vec_add_scalar(aux1,1);
+		vec_add_scalar(aux2,1);
+		vec_div_elwise(aux1, aux2, aux1);
+
+		// grads := y/yHat
+		vec_div_elwise(y, nn->yHat, grads);
+
+		// grads := -1/n * {y/yHat + (1-y)/(1-yHat)}
+		vec_add(grads, aux1, grads);
+		vec_mult_scalar(grads,-1*(1.0/(vec_type_t)y->m));
+
+		vec_free(&aux1);
+		vec_free(&aux2);
+	}
+
+	return grads;
 }
 
 
@@ -572,11 +701,16 @@ vec_type_t nn_cost_func_prime (
 	//-----------------------------------------------------
 	// CALCULATE THE COST FOR OUTPUT
 	//-----------------------------------------------------
-	// (y - yHat) ^ 2
-	vec_t* y_yHat_tmp = vec_get_diff(Y,nn->yHat);
-	vec_apply(y_yHat_tmp, vec_square_op);
-	double cost = 0.5 * vec_inner_sum(y_yHat_tmp);
-	vec_free(&y_yHat_tmp);
+	// // (y - yHat) ^ 2
+	// vec_t* y_yHat_tmp = vec_get_diff(Y,nn->yHat);
+	// vec_apply(y_yHat_tmp, vec_square_op);
+	// double cost = 0.5 * vec_inner_sum(y_yHat_tmp);
+	// vec_free(&y_yHat_tmp);
+
+	double cost = nn_cost_func(
+		nn,Y,nn->yHat,
+		nn->cost_function
+	);
 	//-----------------------------------------------------
 
 	//==============================================
@@ -593,12 +727,7 @@ vec_type_t nn_cost_func_prime (
 	// dJdB outputs
 	vec_t** dJdBs = (vec_t**) malloc((nn->nlayers-1) * sizeof(vec_t*));
 
-	// First error signal, -(y - yHat)
-	vec_t* _y_yHat = vec_get_diff(Y,nn->yHat);
-	vec_mult_scalar(_y_yHat,-1);
-	vec_t* errsign = _y_yHat;
-	
-	// Last activation matrix (Xt)
+	// First activation matrix (Xt)
 	vec_t* Xt = vec_transposed(X);
 	
 	// Loop variables
@@ -606,6 +735,24 @@ vec_type_t nn_cost_func_prime (
 	vec_t* sigPrime_z = NULL;
 	vec_t* delta      = NULL;
 	vec_t* Wt         = NULL;
+	
+	
+	
+	// COST FUNCTION DERIVATIVE ---------------------------
+	// First error signal, -(y - yHat),
+	// derivative of half squared error
+	// vec_t* _y_yHat = vec_get_diff(Y,nn->yHat);
+	// vec_mult_scalar(_y_yHat,-1);
+
+	// Cost function derivative goes here
+	// vec_t* errsign = _y_yHat;
+	vec_t* errsign = nn_cost_func_gradient(
+		nn,Y,nn->yHat,
+		nn->cost_function
+	);
+	//-----------------------------------------------------
+
+
 
 	// Backpropagation loop
 	for (i = nn->nlayers-2; i >= 0; i--) 
@@ -614,7 +761,10 @@ vec_type_t nn_cost_func_prime (
 		// Prepare matrices 
 		//---------------------------------------------------------------------
 		// Sigmoid prime of Z f'act(Z[i])
-		sigPrime_z = vec_apply_out(nn->Z[i], nn_sigmoid_prime);
+		// sigPrime_z = vec_apply_out(nn->Z[i], nn_sigmoid_prime);
+		sigPrime_z = vec_apply_out(
+			nn->Z[i], nn_get_activation_prime(nn->activations[i])
+		);
 		if (i == 0)
 			act = Xt; // First layer's activation is the data itself
 		else
@@ -856,7 +1006,11 @@ void nn_backpropagation_mem (
 			// Prepare matrices 
 			//-----------------------------------------------------------------
 			// Sigmoid prime of Z f'act(Z[i])
-			sigPrime_z = vec_apply_out(nn->Z[j], nn_sigmoid_prime);
+			// sigPrime_z = vec_apply_out(nn->Z[j], nn_sigmoid_prime);
+			sigPrime_z = vec_apply_out(
+				nn->Z[j], 
+				nn_get_activation_prime(nn->activations[j])
+			);
 			if (j == 0)
 				act = Xt; // First layer's activation is the data itself
 			else
@@ -960,21 +1114,16 @@ vec_type_t nn_activation_func (vec_type_t k, activation_t func, int flag)
 	vec_type_t result;
 
 	if (flag == NN_IDENTITY_ACTIVATION)
-	{
 		result = nn_identity(k);
-	}
+
 	else if (flag == NN_RELU_ACTIVATION)
-	{
 		result = nn_relu(k);
-	}
+	
 	else if (flag == NN_SIGMOID_ACTIVATION)
-	{
 		result = nn_sigmoid(k);
-	}
+	
 	else if (flag == NN_HYPERBOLIC_TANGENT_ACTIVATION)
-	{
 		result = nn_hyperbolic_tangent(k);
-	}
 
 	return (vec_type_t) result;
 }
@@ -984,23 +1133,58 @@ vec_type_t nn_activation_func_prime (vec_type_t k, activation_t func, int flag)
 	vec_type_t result;
 
 	if (flag == NN_IDENTITY_ACTIVATION)
-	{
 		result = nn_identity_prime(k);
-	}
+	
 	else if (flag == NN_RELU_ACTIVATION)
-	{
 		result = nn_relu_prime(k);
-	}
+	
 	else if (flag == NN_SIGMOID_ACTIVATION)
-	{
 		result = nn_sigmoid_prime(k);
-	}
+	
 	else if (flag == NN_HYPERBOLIC_TANGENT_ACTIVATION)
-	{
 		result = nn_hyperbolic_tangent_prime(k);
-	}
 
 	return (vec_type_t) result;
+}
+
+
+
+activation_t nn_get_activation (int flag)
+{
+	activation_t activation;
+
+	if (flag == NN_IDENTITY_ACTIVATION)
+		activation = nn_identity;
+	
+	else if (flag == NN_RELU_ACTIVATION)
+		activation = nn_relu;
+	
+	else if (flag == NN_SIGMOID_ACTIVATION)
+		activation = nn_sigmoid;
+	
+	else if (flag == NN_HYPERBOLIC_TANGENT_ACTIVATION)
+		activation = nn_hyperbolic_tangent;
+
+	return activation;
+}
+
+activation_t nn_get_activation_prime (int flag)
+{
+	activation_t activation_prime;
+
+	if (flag == NN_IDENTITY_ACTIVATION)
+		activation_prime = nn_identity_prime;
+	
+	else if (flag == NN_RELU_ACTIVATION)
+		activation_prime = nn_relu_prime;
+	
+	else if (flag == NN_SIGMOID_ACTIVATION)
+		activation_prime = nn_sigmoid_prime;
+	
+	else if (flag == NN_HYPERBOLIC_TANGENT_ACTIVATION)
+		activation_prime = nn_hyperbolic_tangent_prime;
+
+	return activation_prime;
 }
 
 
@@ -1023,10 +1207,17 @@ vec_type_t nn_identity_prime (vec_type_t k)
 
 
 // ReLU ACTIVATION ----------------------------------------
+const double RELU_THRESHOLD = 1;
+
 vec_type_t nn_relu (vec_type_t k)
 {
 	double x = (double) k;
 	double y = fmax(0.0,x);
+
+	// Trying to clip...
+	if (y > RELU_THRESHOLD)
+		y = RELU_THRESHOLD;
+
 	return (vec_type_t) y;
 }
 
@@ -1034,6 +1225,11 @@ vec_type_t nn_relu_prime (vec_type_t k)
 {
 	double x = (double) k;
 	double y = k > 0 ? 1 : 0;
+
+	// Trying to clip...
+	if (y > RELU_THRESHOLD)
+		y = RELU_THRESHOLD;
+	
 	return (vec_type_t) y;
 }
 //---------------------------------------------------------

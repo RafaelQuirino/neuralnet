@@ -1293,7 +1293,7 @@ vec_t* vec_get_div_elwise (vec_t* A, vec_t* B)
         for (j = 0; j < A->n; j++) 
         {
             vec_type_t bij = vec_get(B,i,j);
-            vec_type_t den = bij == 0.0 ? 0.000001 : bij; // Dont divide by 0
+            vec_type_t den = bij == 0.0 ? 0.00001 : bij; // Dont divide by 0
             vec_set(AdivB, i, j, vec_get(A,i,j) / den);
         }
     }
@@ -1414,4 +1414,9 @@ vec_type_t vec_square_op (vec_type_t elem)
 vec_type_t vec_sqrt_op (vec_type_t elem)
 {
     return sqrt(elem);
+}
+
+vec_type_t vec_log_op (vec_type_t elem)
+{
+    return log(elem);
 }

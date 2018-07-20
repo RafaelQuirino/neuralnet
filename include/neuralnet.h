@@ -31,15 +31,16 @@ extern "C" {
 //---------------------------------------------------------
 // Defining types of loss and cost functions
 //---------------------------------------------------------
-#define NN_SQUARE_ERROR              0
-#define NN_CROSS_ENTROPY             1
-#define NN_MEAN_SQUARE_ERROR         2
-#define NN_HALF_SQUARE_ERROR         3
-#define NN_BINAR_CROSS_ENTROPY       4
+#define NN_HINGE_LOSS                0
+#define NN_SQUARE_ERROR              1
+#define NN_CROSS_ENTROPY             2
+#define NN_MEAN_SQUARE_ERROR         3
+#define NN_HALF_SQUARE_ERROR         4
 #define NN_LOGISTIC_REGRESSION       5
-#define NN_HALF_MEAN_SQUARE_ERROR    6
-#define NN_NEGATIVE_LOG_LIKELIHOOD   7
-#define NN_CATEGORICAL_CROSS_ENTROPY 8
+#define NN_BINARY_CROSS_ENTROPY      6
+#define NN_HALF_MEAN_SQUARE_ERROR    7
+#define NN_NEGATIVE_LOG_LIKELIHOOD   8
+#define NN_CATEGORICAL_CROSS_ENTROPY 9
 //---------------------------------------------------------
 
 //---------------------------------------------------------
@@ -73,7 +74,6 @@ extern "C" {
 
 
 
-// Probably won't use this...
 typedef vec_type_t (*activation_t)(vec_type_t);
 
 
@@ -145,12 +145,23 @@ vec_t* nn_forward (neuralnet_t* nn, vec_t* data);
 // (Just to get neuralnet's output, not running backpropagation)
 vec_t* nn_feed_forward (neuralnet_t* nn, vec_t* data);
 
-vec_type_t nn_cost_func (neuralnet_t* nn, vec_t* X, vec_t* Y);
+// vec_type_t nn_cost_func (neuralnet_t* nn, vec_t* X, vec_t* Y);
+double nn_cost_func (
+    neuralnet_t* nn, vec_t* y, vec_t* yHat,
+    int funcflag
+);
+
+vec_t* nn_cost_func_gradient (
+    neuralnet_t* nn, vec_t* y, vec_t* yHat,
+    int funcflag
+);
 
 vec_type_t nn_cost_func_prime (
 	neuralnet_t* nn, vec_t* X, vec_t* Y,
 	vec_t*** dJdWs_out, vec_t*** dJdBs_out
 );
+
+
 
 void nn_backpropagation (
 	neuralnet_t* nn, vec_t* X, vec_t* Y, 
@@ -170,6 +181,9 @@ void nn_backpropagation_mem (
 
 vec_type_t nn_activation_func (vec_type_t k, activation_t func, int flag);
 vec_type_t nn_activation_func_prime (vec_type_t k, activation_t func, int flag);
+
+activation_t nn_get_activation       (int flag);
+activation_t nn_get_activation_prime (int flag);
 
 // Specific math functions --------------------------------
 vec_type_t nn_identity                (vec_type_t k);

@@ -156,6 +156,7 @@ vec_t*      vec_apply_out (vec_t* A, vec_elwise_op op);
 // vec ops
 vec_type_t 	vec_square_op (vec_type_t elem);
 vec_type_t 	vec_sqrt_op   (vec_type_t elem);
+vec_type_t 	vec_log_op    (vec_type_t elem);
 
 //=============================================================================
 
