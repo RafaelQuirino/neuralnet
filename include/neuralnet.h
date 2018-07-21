@@ -63,13 +63,13 @@ extern "C" {
 #define NN_FROBENIUS_REGULARIZATION 4
 //---------------------------------------------------------
 
-
-
 //---------------------------------------------------------
-// Defining common flags
+// Defining types of optimization
 //---------------------------------------------------------
-#define NN_ACTIVATION       0
-#define NN_ACTIVATION_PRIME 1
+#define NN_NO_OPTIMIZATION       0
+#define NN_MOMENTUM_OPTIMIZATION 1
+#define NN_RMS_OPTIMIZATION      2
+#define NN_ADAM_OPTIMIZATION     3
 //---------------------------------------------------------
 
 
@@ -113,11 +113,12 @@ typedef struct
     // Hyper-parameters
     float learning_rate;
     float momentum;
-    float keep_prob;
-    int   cost_function;
 
-    // Flags
+    // Configuration
+    int cost_function;
+    int output_activation;
     int regularization;
+    int optimization;
 
 } neuralnet_t;
 

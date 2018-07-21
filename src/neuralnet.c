@@ -161,20 +161,27 @@ neuralnet_t* nn_new (int topology[], int tsize, double (*func)())
 		);
 	}
 
-	for (i = 0; i < (tsize-1)-1; i++)
+	for (i = 0; i < (tsize-1); i++)
 	{
 		// newnet->activations[i] = NN_IDENTITY_ACTIVATION;
 		// newnet->activations[i] = NN_RELU_ACTIVATION;
 		newnet->activations[i] = NN_SIGMOID_ACTIVATION;
 		// newnet->activations[i] = NN_HYPERBOLIC_TANGENT_ACTIVATION;
 	}
-	// Output layer's activation
-	newnet->activations[(tsize-1)-1] = NN_SIGMOID_ACTIVATION;
 
-	// newnet->cost_function = NN_SQUARE_ERROR;
-	newnet->cost_function = NN_HALF_SQUARE_ERROR;
-	// newnet->cost_function = NN_MEAN_SQUARE_ERROR;
-	// newnet->cost_function = NN_CROSS_ENTROPY;
+	// Configurations
+	//================
+	newnet->cost_function     = NN_SQUARE_ERROR;
+	// newnet->cost_function     = NN_HALF_SQUARE_ERROR;
+	// newnet->cost_function     = NN_MEAN_SQUARE_ERROR;
+	// newnet->cost_function     = NN_CROSS_ENTROPY;
+	newnet->output_activation = NN_SIGMOID_ACTIVATION;
+	newnet->regularization    = NN_NO_REGULARIZATION;
+	newnet->optimization      = NN_RMS_OPTIMIZATION;
+
+	// Setting output layer's activation
+	//===================================
+	newnet->activations[(tsize-1)-1] = newnet->output_activation;
 
 	return 	newnet;
 }
@@ -234,23 +241,38 @@ void nn_free (neuralnet_t **nn)
 	   
 	   Now we have a topology array [#neurons_layer1, #neurons_layer2, ... , #neurons_layerN]
 
+	   - for each of these layers but the first (input has no activation)
+	     - 32 bit integer: NN_*_ACTIVATION codes for each layer (but the first)
+
+	   Now we have the activation codes for each layer, but the first
+
 	   - (#neurons_layer1 * #neurons_layer2) 64 bit doubles : 1st weight matrix
 	   - (              1 * #neurons_layer2) 64 bit doubles : 1st bias   vector
 	   - (#neurons_layer2 * #neurons_layer3) 64 bit doubles : 2st weight matrix
 	   - (              1 * #neurons_layer3) 64 bit doubles : 2st bias   vector
-	   ...
+	   .
+	   .
+	   .
 	   - (#neurons_layer(N-1) * #neurons_layerN) 64 bit double : (N-1)th weight matrix
 	   - (                  1 * #neurons_layerN) 64 bit double : (N-1)th bias   vector
+
+	   Now we have all the weights and biases
+
+	   - 32 bit integer: cost_function     code
+	   - 32 bit integer: output_activation code
+	   - 32 bit integer: regularization    code
+	   - 32 bit integer: optimization      code	   
 */
 void nn_export (neuralnet_t* nn, const char* fname)
 {
 	// Variables
-	int i, line;
+	int i, j, line;
 	size_t res;
 
 	// If i want to change fname later...
 	const char* namebuff = fname;
 
+	// Open the file for writing
 	FILE* fp = fopen(namebuff, "wb");
 
 	// First, fwrite the number of layers
@@ -260,7 +282,7 @@ void nn_export (neuralnet_t* nn, const char* fname)
 	if (res != 1) 
 	{
 		ut_errmsg (
-			"Couldnot fwrite nn->laers into file.",
+			"Couldnot fwrite nn->layers into file.",
 			__FILE__, line, 1
 		);
 	}
@@ -282,34 +304,97 @@ void nn_export (neuralnet_t* nn, const char* fname)
 		}
 	}
 
-	// Then, for each layer, fwrite the weights linearly, row-wise, and biases
-	for (i = 0; i < nn->nlayers-1; i++)
+	// Now, for each layer but the first, fwrite its activation code
+	for (i = 0; i < nn->nlayers-1; i++) 
 	{
-		res = fwrite(nn->W[i]->vec, sizeof(double), nn->W[i]->size, fp);
+		res = fwrite(&nn->activations[i], sizeof(int), 1, fp);
 		line = __LINE__ - 1;
-		
-		if (res != nn->W[i]->size) 
+
+		if (res != 1) 
 		{
 			char msgbuf[128];
-			sprintf(msgbuf, "Couldnot fwrite nn->W[%d]->vec into file.", i);
+			sprintf(msgbuf, "Couldnot fwrite nn->activations[%d] into file.", i);
 			ut_errmsg (
 				msgbuf,
 				__FILE__, line, 1
 			);
 		}
+	}
 
-		res = fwrite(nn->B[i]->vec, sizeof(double), nn->B[i]->size, fp);
-		line = __LINE__ - 1;
-
-		if (res != nn->B[i]->size) 
+	// Then, for each layer, fwrite the weights linearly, row-wise, and biases
+	for (i = 0; i < nn->nlayers-1; i++)
+	{
+		for (j = 0; j < nn->W[i]->size; j++)
 		{
-			char msgbuf[128];
-			sprintf(msgbuf, "Couldnot fwrite nn->B[%d]->vec into file.", i);
-			ut_errmsg (
-				msgbuf,
-				__FILE__, line, 1
-			);
+			double val = (double) nn->W[i]->vec[j];
+			res = fwrite(&val, sizeof(double), 1, fp);
+			line = __LINE__ - 1;
+			if (res != 1) 
+			{
+				char msgbuf[128];
+				sprintf(msgbuf, "Couldnot fwrite nn->W[%d]->vec[%d] into file.", i,j);
+				ut_errmsg (
+					msgbuf,
+					__FILE__, line, 1
+				);
+			}
+		}
+
+		for (j = 0; j < nn->B[i]->size; j++)
+		{
+			double val = (double) nn->B[i]->vec[j];
+			res = fwrite(&val, sizeof(double), 1, fp);
+			line = __LINE__ - 1;
+			if (res != 1) 
+			{
+				char msgbuf[128];
+				sprintf(msgbuf, "Couldnot fwrite nn->B[%d]->vec[%d] into file.", i,j);
+				ut_errmsg (
+					msgbuf,
+					__FILE__, line, 1
+				);
+			}
 		}		
+	} // for (i = 0; i < nn->nlayers-1; i++)
+
+	res = fwrite(&nn->cost_function, sizeof(int), 1, fp);
+	line = __LINE__ - 1;
+	if (res != 1) 
+	{
+		ut_errmsg (
+			"Couldnot fwrite cost_function code into file.",
+			__FILE__, line, 1
+		);
+	}
+
+	res = fwrite(&nn->output_activation, sizeof(int), 1, fp);
+	line = __LINE__ - 1;
+	if (res != 1) 
+	{
+		ut_errmsg (
+			"Couldnot fwrite output_activation code into file.",
+			__FILE__, line, 1
+		);
+	}
+
+	res = fwrite(&nn->regularization, sizeof(int), 1, fp);
+	line = __LINE__ - 1;
+	if (res != 1) 
+	{
+		ut_errmsg (
+			"Couldnot fwrite regularization code into file.",
+			__FILE__, line, 1
+		);
+	}
+
+	res = fwrite(&nn->optimization, sizeof(int), 1, fp);
+	line = __LINE__ - 1;
+	if (res != 1) 
+	{
+		ut_errmsg (
+			"Couldnot fwrite optimization code into file.",
+			__FILE__, line, 1
+		);
 	}
 
 	fclose(fp);
@@ -320,14 +405,13 @@ void nn_export (neuralnet_t* nn, const char* fname)
 neuralnet_t* nn_import (const char* fname)
 {
 	// Variables
-	int i, numlayers, line;
+	int i, j, numlayers, line;
 	size_t res;
 
 	FILE* fp = fopen(fname, "rb");
 
 	res = fread(&numlayers, sizeof(int), 1, fp);
 	line = __LINE__ - 1;
-
 	if (res != 1) 
 	{
         ut_errmsg (
@@ -353,40 +437,104 @@ neuralnet_t* nn_import (const char* fname)
 		}
 	}
 
-	// Create new neural_net_t*
+	// Create new neuralnet_t*
 	neuralnet_t* nn = nn_new(topology, numlayers, NULL);
 
 	for (i = 0; i < numlayers-1; i++)
 	{
-		// Read weights
-		int numweights = topology[i] * topology[i+1];
-		res = fread(nn->W[i]->vec, sizeof(double), numweights, fp);
+		res = fread(&nn->activations[i], sizeof(int), 1, fp);
 		line = __LINE__ - 1;
 
-		if (res != numweights) 
+		if (res != 1) 
 		{
 			char msgbuf[128];
-			sprintf(msgbuf, "Couldnot fread weights of W[%d].", i);
+			sprintf(msgbuf, "Couldnot fread activation code of layer %d.", i+1);
 			ut_errmsg (
 				msgbuf,
 				__FILE__, line, 1
 			);
 		}
+	}
+
+	for (i = 0; i < numlayers-1; i++)
+	{
+		// Read weights
+		int numweights = topology[i] * topology[i+1];
+		for (j = 0; j < numweights; j++)
+		{
+			double val;
+			res = fread(&val, sizeof(double), 1, fp);
+			line = __LINE__ - 1;
+			if (res != 1) 
+			{
+				char msgbuf[128];
+				sprintf(msgbuf, "Couldnot fread weight %d of layer %d.", j,i);
+				ut_errmsg (
+					msgbuf,
+					__FILE__, line, 1
+				);
+			}
+			nn->W[i]->vec[j] = (vec_type_t) val;
+		}
 
 		// Read biases
 		int numbiases = 1 * topology[i+1];
-		res = fread(nn->B[i]->vec, sizeof(double), numbiases, fp);
-		line = __LINE__ - 1;
-
-		if (res != numbiases) 
+		for (j = 0; j < numbiases; j++)
 		{
-			char msgbuf[128];
-			sprintf(msgbuf, "Couldnot fread biases of B[%d].", i);
-			ut_errmsg (
-				msgbuf,
-				__FILE__, line, 1
-			);
-		}		
+			double val;
+			res = fread(&val, sizeof(double), 1, fp);
+			line = __LINE__ - 1;
+			if (res != 1) 
+			{
+				char msgbuf[128];
+				sprintf(msgbuf, "Couldnot fread bias %d of layer %d.", j,i);
+				ut_errmsg (
+					msgbuf,
+					__FILE__, line, 1
+				);
+			}
+			nn->B[i]->vec[j] = (vec_type_t) val;
+		}
+	}
+
+	res = fread(&nn->cost_function, sizeof(int), 1, fp);
+	line = __LINE__ - 1;
+	if (res != 1) 
+	{
+        ut_errmsg (
+			"Couldn't fread cost_function code.",
+			__FILE__, line, 1
+		);
+	}
+
+	res = fread(&nn->output_activation, sizeof(int), 1, fp);
+	line = __LINE__ - 1;
+	if (res != 1) 
+	{
+        ut_errmsg (
+			"Couldn't fread output_activation code.",
+			__FILE__, line, 1
+		);
+	}
+
+	res = fread(&nn->regularization, sizeof(int), 1, fp);
+	line = __LINE__ - 1;
+	if (res != 1) 
+	{
+        ut_errmsg (
+			"Couldn't fread regularization code.",
+			__FILE__, line, 1
+		);
+	}
+
+	res = fread(&nn->optimization, sizeof(int), 1, fp);
+	line = __LINE__ - 1;
+	if (res != 1) 
+	{
+        ut_errmsg (
+			"Couldn't fread optimization code.",
+			__FILE__, line, 1
+		);
 	}
 
 	fclose(fp);
@@ -603,6 +751,17 @@ double nn_cost_func (
 	}
 	else if (funcflag == NN_CROSS_ENTROPY)
 	{
+		// ylnyHat = y * ln(yHat)
+		vec_t* ylnyHat = vec_apply_out(yHat, vec_log_op);
+		vec_mult_elwise(y, ylnyHat, ylnyHat);
+		// cost = (-1.0/(vec_type_t)y->m) * vec_inner_sum(ylnyHat);
+		cost = (-1.0) * vec_inner_sum(ylnyHat);
+		vec_free(&ylnyHat);
+	}
+	// ***   THIS IS WRONG   ***
+	// J = -1/n * Sum{y/yHat + (1-y)/(1-yHat)}
+	else if (funcflag == NN_BINARY_CROSS_ENTROPY)
+	{
 		// (1-y)
 		vec_t* aux1 = vec_get_scalar_prod(y,-1);
 		vec_add_scalar(aux1,1);
@@ -660,6 +819,13 @@ vec_t* nn_cost_func_gradient (
 		vec_sub(y, nn->yHat, grads);
 		vec_mult_scalar(grads,-(1/(vec_type_t)y->m));
 	}
+	else if (funcflag == NN_CROSS_ENTROPY)
+	{
+		grads = vec_clone(y);
+		vec_mult_scalar(grads,-1);
+		vec_div_elwise(grads, yHat, grads);
+	}
+	// ***   THIS IS WRONG   ***
 	// J = -1/n * Sum{y/yHat + (1-y)/(1-yHat)}
 	else if (funcflag == NN_BINARY_CROSS_ENTROPY)
 	{

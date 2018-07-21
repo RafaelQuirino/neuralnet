@@ -152,6 +152,7 @@ int main (int argc, char** argv)
 		// Feed data forward
 		vec_t* output = nn_feed_forward(nn, dataset->X);
 
+        // Print estimations for class 1
 		for (i = 0; i < output->m; i++) {
 			printf("%g", vec_get(output,i,0));
 			printf("\n");
