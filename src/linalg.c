@@ -560,6 +560,60 @@ void vec_print_bitmap (vec_t* bitmap, int row,  int rows, int columns)
 // REDUCTIONS
 //=====================================
 
+vec_type_t vec_max (vec_t* A)
+{
+    int line = __LINE__ - 2;
+    if (A == NULL) 
+    {
+        ut_errmsg (
+            "Pointer vec_t* is NULL.",
+            __FILE__, line, 1
+        );
+    }
+
+    int i, j;
+    vec_type_t themax = vec_get(A,0,0);
+    
+    for (i = 0; i < A->m; i++) 
+    {
+        for (j = 0; j < A->n; j++) 
+        {
+            vec_type_t k = vec_get(A,i,j);
+            if (k > themax)
+                themax = k;
+        }
+    }
+
+    return themax;
+}
+
+vec_type_t vec_min (vec_t* A)
+{
+    int line = __LINE__ - 2;
+    if (A == NULL) 
+    {
+        ut_errmsg (
+            "Pointer vec_t* is NULL.",
+            __FILE__, line, 1
+        );
+    }
+
+    int i, j;
+    vec_type_t themin = vec_get(A,0,0);
+    
+    for (i = 0; i < A->m; i++) 
+    {
+        for (j = 0; j < A->n; j++) 
+        {
+            vec_type_t k = vec_get(A,i,j);
+            if (k < themin)
+                themin = k;
+        }
+    }
+
+    return themin;
+}
+
 vec_type_t vec_inner_sum (vec_t* A)
 {
     int line = __LINE__ - 2;
