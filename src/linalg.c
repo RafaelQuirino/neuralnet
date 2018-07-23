@@ -1474,3 +1474,8 @@ vec_type_t vec_log_op (vec_type_t elem)
 {
     return log(elem);
 }
+
+vec_type_t vec_exp_op (vec_type_t elem)
+{
+    return exp(elem);
+}

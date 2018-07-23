@@ -72,8 +72,16 @@ extern "C" {
 #define NN_ADAM_OPTIMIZATION     3
 //---------------------------------------------------------
 
+//---------------------------------------------------------
+// Defining common values
+//---------------------------------------------------------
+static const float NN_EPSILON = 1e-9;
+//---------------------------------------------------------
 
 
+
+// Type of an ordinary activation function
+// (or the activation function's derivative)
 typedef vec_type_t (*activation_t)(vec_type_t);
 
 
@@ -96,9 +104,10 @@ typedef struct
     // W  : represents the weight matrices (synapses)
     // B  : represents the bias vectors
     // VdW: represents the "velocities" for weights 
-    // VdB: represents the "velocities" for biases 
-    vec_t **W, **VdW;
-    vec_t **B, **VdB;
+    // VdB: represents the "velocities" for biases
+    // SdW, SdB are for RMS optimization update 
+    vec_t **W, **VdW, **SdW;
+    vec_t **B, **VdB, **SdB;
 
     // Arrays of activities (Z) and activations (A),
     // where activities are the sums of stimuli in each 
@@ -111,8 +120,10 @@ typedef struct
     //-------------------------------------------------------
 
     // Hyper-parameters
-    float learning_rate;
-    float momentum;
+    float rms_rate;               // beta2
+    float momentum_rate;          // beta1
+    float learning_rate;          // alpha or eta
+    float regularization_rate;    // lambda
 
     // Configuration
     int cost_function;
@@ -180,11 +191,25 @@ void nn_backpropagation_mem (
 	vec_type_t learning_rate
 );
 
+void nn_optimization (
+	neuralnet_t* nn, vec_t* dJdW, vec_t* dJdB,
+	double learning_rate, int layer, int iteration,
+    int optimization_code
+);
+
 vec_type_t nn_activation_func (vec_type_t k, activation_t func, int flag);
 vec_type_t nn_activation_func_prime (vec_type_t k, activation_t func, int flag);
 
 activation_t nn_get_activation       (int flag);
 activation_t nn_get_activation_prime (int flag);
+
+vec_t* nn_apply_activation (
+    neuralnet_t* nn, int layer
+);
+
+vec_t* nn_apply_activation_prime (
+    neuralnet_t* nn, int layer
+);
 
 // Specific math functions --------------------------------
 vec_type_t nn_identity                (vec_type_t k);
@@ -199,6 +224,14 @@ vec_type_t nn_sigmoid_prime           (vec_type_t k);
 vec_type_t nn_hyperbolic_tangent       (vec_type_t k);
 vec_type_t nn_hyperbolic_tangent_prime (vec_type_t k);
 //---------------------------------------------------------
+
+vec_t* nn_softmax_of_layer (
+    neuralnet_t* nn, int layer
+);
+
+vec_t* nn_softmax_prime_of_layer (
+    neuralnet_t* nn, int layer
+);
 
 
 

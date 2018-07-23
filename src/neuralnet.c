@@ -6,7 +6,7 @@ neuralnet_t* nn_new (int topology[], int tsize, double (*func)())
 {
 	// Obs.: "func" is a pointer to a function
 	// that generates some value (like gaussian random numbers...).
-	// If it is set to NULL, all weights are going to be set to 1.0. 
+	// If it is set to NULL, all weights are going to be set to 1. 
 
 	// Variables
 	int i, line;
@@ -15,7 +15,6 @@ neuralnet_t* nn_new (int topology[], int tsize, double (*func)())
 	neuralnet_t* newnet = NULL;
 	newnet = (neuralnet_t*) malloc(sizeof(neuralnet_t));
 	line = __LINE__ - 1;
-
 	if (!newnet)
 	{
 		ut_errmsg (
@@ -28,7 +27,6 @@ neuralnet_t* nn_new (int topology[], int tsize, double (*func)())
 	newnet->topology = NULL;
 	newnet->topology = (int*) malloc(tsize * sizeof(int));
 	line = __LINE__ - 1;
-
 	if (!newnet->topology)
 	{
 		ut_errmsg (
@@ -36,15 +34,14 @@ neuralnet_t* nn_new (int topology[], int tsize, double (*func)())
 			__FILE__, line, 1
 		);
 	}
-
 	for (i = 0; i < tsize; i++)
 		newnet->topology[i] = topology[i];
 	newnet->nlayers = tsize;
 
-	// Building weight matrices...
+	// Building weight matrices and bias vectors
 	newnet->W = NULL;
 	newnet->W = (vec_t**) malloc((tsize-1) * sizeof(vec_t*));
-
+	line = __LINE__ - 1;
 	if (!newnet->W)
 	{
 		ut_errmsg (
@@ -52,20 +49,9 @@ neuralnet_t* nn_new (int topology[], int tsize, double (*func)())
 			__FILE__, line, 1
 		);
 	}
-
-	for (i = 0; i < tsize-1; i++) 
-	{
-		newnet->W[i] = vec_new(topology[i],topology[i+1]);
-		if (func == NULL)
-			vec_set_all(newnet->W[i], 1.0);
-		else
-			vec_set_all_func(newnet->W[i], func);
-	}
-
-	// Building bias matrices (1 x n vectors)...
-	newnet->B = NULL;
+	newnet->B = NULL; // (1 x n vectors)...
 	newnet->B = (vec_t**) malloc((tsize-1) * sizeof(vec_t*));
-
+	line = __LINE__ - 1;
 	if (!newnet->B)
 	{
 		ut_errmsg (
@@ -73,20 +59,25 @@ neuralnet_t* nn_new (int topology[], int tsize, double (*func)())
 			__FILE__, line, 1
 		);
 	}
-
 	for (i = 0; i < tsize-1; i++) 
 	{
+		newnet->W[i] = vec_new(topology[i],topology[i+1]);
+		if (func == NULL)
+			vec_set_all(newnet->W[i], 1);
+		else
+			vec_set_all_func(newnet->W[i], func);
+
 		newnet->B[i] = vec_new(1,topology[i+1]);
 		if (func == NULL)
-			vec_set_all(newnet->B[i], 1.0);
+			vec_set_all(newnet->B[i], 1);
 		else
 			vec_set_all_func(newnet->B[i], func);
 	}
 
-	// Building activity (Z) and activation (A) vecrices...
+	// Building activity (Z) and activation (A) matrices...
 	newnet->Z = NULL;
 	newnet->Z = (vec_t**) malloc((tsize-1) * sizeof(vec_t*));
-
+	line = __LINE__ - 1;
 	if (!newnet->Z)
 	{
 		ut_errmsg (
@@ -94,10 +85,9 @@ neuralnet_t* nn_new (int topology[], int tsize, double (*func)())
 			__FILE__, line, 1
 		);
 	}
-
 	newnet->A = NULL;
 	newnet->A = (vec_t**) malloc((tsize-1) * sizeof(vec_t*));
-
+	line = __LINE__ - 1;
 	if (!newnet->A)
 	{
 		ut_errmsg (
@@ -105,7 +95,7 @@ neuralnet_t* nn_new (int topology[], int tsize, double (*func)())
 			__FILE__, line, 1
 		);
 	}
-
+	// Initializing activity and activation matrices
 	for (i = 0; i < tsize-1; i++) 
 	{
 		newnet->Z[i] = NULL;
@@ -115,7 +105,6 @@ neuralnet_t* nn_new (int topology[], int tsize, double (*func)())
 	// Building "velocities" for momentum learning
 	newnet->VdW = NULL;
 	newnet->VdW = (vec_t**) malloc((tsize-1) * sizeof(vec_t*));
-
 	if (!newnet->VdW)
 	{
 		ut_errmsg (
@@ -123,16 +112,8 @@ neuralnet_t* nn_new (int topology[], int tsize, double (*func)())
 			__FILE__, line, 1
 		);
 	}
-
-	for (i = 0; i < tsize-1; i++) 
-	{
-		newnet->VdW[i] = vec_new(topology[i],topology[i+1]);
-		vec_set_all(newnet->VdW[i], 0.0);
-	}
-	
 	newnet->VdB = NULL;
 	newnet->VdB = (vec_t**) malloc((tsize-1) * sizeof(vec_t*));
-
 	if (!newnet->VdB)
 	{
 		ut_errmsg (
@@ -140,13 +121,44 @@ neuralnet_t* nn_new (int topology[], int tsize, double (*func)())
 			__FILE__, line, 1
 		);
 	}
-
 	for (i = 0; i < tsize-1; i++) 
 	{
+		newnet->VdW[i] = vec_new(topology[i],topology[i+1]);
+		vec_set_all(newnet->VdW[i], 0);
+
 		newnet->VdB[i] = vec_new(1, topology[i+1]);
-		vec_set_all(newnet->VdB[i], 0.0);
+		vec_set_all(newnet->VdB[i], 0);
 	}
 
+	// Building "sums" for RMS and ADAM learning
+	newnet->SdW = NULL;
+	newnet->SdW = (vec_t**) malloc((tsize-1) * sizeof(vec_t*));
+	if (!newnet->SdW)
+	{
+		ut_errmsg (
+			"Couldnot allocate memory for SdW matrices.",
+			__FILE__, line, 1
+		);
+	}
+	newnet->SdB = NULL;
+	newnet->SdB = (vec_t**) malloc((tsize-1) * sizeof(vec_t*));
+	if (!newnet->SdB)
+	{
+		ut_errmsg (
+			"Couldnot allocate memory for SdB matrices.",
+			__FILE__, line, 1
+		);
+	}
+	for (i = 0; i < tsize-1; i++) 
+	{
+		newnet->SdW[i] = vec_new(topology[i],topology[i+1]);
+		vec_set_all(newnet->SdW[i], 0);
+
+		newnet->SdB[i] = vec_new(1, topology[i+1]);
+		vec_set_all(newnet->SdB[i], 0);
+	}
+
+	// Initializing net's output
 	newnet->yHat = NULL;
 
 	// Creating activation functions
@@ -163,21 +175,20 @@ neuralnet_t* nn_new (int topology[], int tsize, double (*func)())
 
 	for (i = 0; i < (tsize-1); i++)
 	{
-		// newnet->activations[i] = NN_IDENTITY_ACTIVATION;
-		// newnet->activations[i] = NN_RELU_ACTIVATION;
 		newnet->activations[i] = NN_SIGMOID_ACTIVATION;
-		// newnet->activations[i] = NN_HYPERBOLIC_TANGENT_ACTIVATION;
 	}
 
 	// Configurations
 	//================
 	newnet->cost_function     = NN_SQUARE_ERROR;
-	// newnet->cost_function     = NN_HALF_SQUARE_ERROR;
-	// newnet->cost_function     = NN_MEAN_SQUARE_ERROR;
-	// newnet->cost_function     = NN_CROSS_ENTROPY;
-	newnet->output_activation = NN_SIGMOID_ACTIVATION;
+	newnet->output_activation = NN_SOFTMAX_ACTIVATION;
 	newnet->regularization    = NN_NO_REGULARIZATION;
-	newnet->optimization      = NN_RMS_OPTIMIZATION;
+	newnet->optimization      = NN_ADAM_OPTIMIZATION;
+	
+	newnet->rms_rate            = 0.9;
+	newnet->momentum_rate       = 0.9;
+	newnet->learning_rate       = 0.001;
+	newnet->regularization_rate = 0.0001;
 
 	// Setting output layer's activation
 	//===================================
@@ -616,10 +627,11 @@ vec_t* nn_forward (neuralnet_t* nn, vec_t* data)
 		// Last, make A[i] = fact(Z[i]),
 		// where fact is the activation function
 		// nn->A[i] = vec_apply_out(nn->Z[i], nn_sigmoid);
-		nn->A[i] = vec_apply_out(
-			nn->Z[i], 
-			nn_get_activation(nn->activations[i])
-		);
+		// nn->A[i] = vec_apply_out(
+		// 	nn->Z[i], 
+		// 	nn_get_activation(nn->activations[i])
+		// );
+		nn->A[i] = nn_apply_activation(nn, i);
 
 		// Update the layer input to be
 		// the activation of the previous layer
@@ -679,10 +691,11 @@ vec_t* nn_feed_forward (neuralnet_t* nn, vec_t* data)
 		// Last, make Z[i] = fact(Z[i]),
 		// where fact is the activation function
 		// vec_apply_to (nn->Z[i], nn->Z[i], nn_sigmoid);
-		vec_apply_to (
-			nn->Z[i], nn->Z[i], 
-			nn_get_activation(nn->activations[i])
-		);
+		// vec_apply_to (
+		// 	nn->Z[i], nn->Z[i], 
+		// 	nn_get_activation(nn->activations[i])
+		// );
+		nn->Z[i] = nn_apply_activation(nn, i);
 
 		// Update the layer input to be
 		// the activation of the previous layer
@@ -749,6 +762,7 @@ double nn_cost_func (
 		cost = (1.0/(2.0*(vec_type_t)y->m)) * vec_inner_sum(y_yHat);
 		vec_free(&y_yHat);
 	}
+	// ***   PROBABLY WRONG   ***
 	else if (funcflag == NN_CROSS_ENTROPY)
 	{
 		// ylnyHat = y * ln(yHat)
@@ -819,6 +833,7 @@ vec_t* nn_cost_func_gradient (
 		vec_sub(y, nn->yHat, grads);
 		vec_mult_scalar(grads,-(1/(vec_type_t)y->m));
 	}
+	// ***   PROBABLY WRONG   ***
 	else if (funcflag == NN_CROSS_ENTROPY)
 	{
 		grads = vec_clone(y);
@@ -899,7 +914,7 @@ vec_type_t nn_cost_func_prime (
 	
 	// Loop variables
 	vec_t* act        = NULL;
-	vec_t* sigPrime_z = NULL;
+	vec_t* grads_z    = NULL;
 	vec_t* delta      = NULL;
 	vec_t* Wt         = NULL;
 	
@@ -929,9 +944,12 @@ vec_type_t nn_cost_func_prime (
 		//---------------------------------------------------------------------
 		// Sigmoid prime of Z f'act(Z[i])
 		// sigPrime_z = vec_apply_out(nn->Z[i], nn_sigmoid_prime);
-		sigPrime_z = vec_apply_out(
-			nn->Z[i], nn_get_activation_prime(nn->activations[i])
-		);
+		// grads_z = vec_apply_out(
+		// 	nn->Z[i], nn_get_activation_prime(nn->activations[i])
+		// );
+
+		grads_z = nn_apply_activation_prime(nn, i);
+		
 		if (i == 0)
 			act = Xt; // First layer's activation is the data itself
 		else
@@ -941,8 +959,8 @@ vec_type_t nn_cost_func_prime (
 		//---------------------------------------------------------------------
 		// Calculating and saving dJdW and dJdB
 		//---------------------------------------------------------------------
-		delta = vec_get_mult_elwise(errsign, sigPrime_z);
-		vec_free(&sigPrime_z);
+		delta = vec_get_mult_elwise(errsign, grads_z);
+		vec_free(&grads_z);
 		vec_free(&errsign);
 
 		// Weights gradient
@@ -991,7 +1009,7 @@ void nn_backpropagation (
 	vec_t **dJdW, **dJdB;
 
 	// Parameters
-	double momentum = 0.9;
+	double momentum = nn->momentum_rate;
 
 	// For each iteration of backpropagation
 	for (i = 0; i < num_iterations; i++) 
@@ -1003,100 +1021,15 @@ void nn_backpropagation (
 		// For each layer in the neural net
 		for (j = 0; j < nn->nlayers-1; j++)
 		{
-			//=================================================================
-			// FIRST WAY, WITHOUT OPTIMIZATION
-			//=================================================================
-			if (FALSE)
-			{
-				// Updating weights for current layer
-				vec_mult_scalar(dJdW[j], learning_rate);
-				vec_sub(nn->W[j], dJdW[j], nn->W[j]);
-				vec_free(&dJdW[j]);
+			
+			nn_optimization(
+				nn, dJdW[j], dJdB[j],
+				learning_rate, j, i, nn->optimization
+			);
 
-				// Updating biases for current layer
-				vec_mult_scalar(dJdB[j], learning_rate);
-				vec_sub(nn->B[j], dJdB[j], nn->B[j]);
-				vec_free(&dJdB[j]);
-			}
-			//=================================================================
-
-			//=================================================================
-			// SECOND WAY, WITH MOMENTUM LEARNING
-			//=================================================================
-			if (FALSE)
-			{
-				// Updating weights and biases for current layer
-				// newVdW = momentum*VdW + (1-momentum)*dJdW
-				// newVdB = momentum*VdB + (1-momentum)*dJdB
-				// newW   = W - learning_rate*newVdW
-				// newB   = B - learning_rate*newVdB
-
-				vec_mult_scalar(nn->VdW[j], momentum);
-				vec_mult_scalar(dJdW[j], 1-momentum);
-				vec_add(nn->VdW[j], dJdW[j], nn->VdW[j]);
-				vec_t* lrateVdW = vec_get_scalar_prod(nn->VdW[j], learning_rate);
-				vec_sub(nn->W[j], lrateVdW, nn->W[j]);
-				vec_free(&lrateVdW);
-				vec_free(&dJdW[j]);
-
-				vec_mult_scalar(nn->VdB[j], momentum);
-				vec_mult_scalar(dJdB[j], 1-momentum);
-				vec_add(nn->VdB[j], dJdB[j], nn->VdB[j]);
-				vec_t* lrateVdB = vec_get_scalar_prod(nn->VdB[j], learning_rate);
-				vec_sub(nn->B[j], lrateVdB, nn->B[j]);
-				vec_free(&lrateVdB);
-				vec_free(&dJdB[j]);
-			}
-			//=================================================================
-
-			//=================================================================
-			// THIRD WAY, WITH RMS LEARNING
-			//=================================================================
-			if (TRUE)
-			{
-				//------------------
-				// Updating weights
-				// -----------------                      element wise square...
-				// newVdW = momentum*VdW + (1-momentum)*(dJdW^2)
-				// newW = W - learning_rate*(dJdW/sqrt(newVdW))
-				vec_mult_scalar(nn->VdW[j], momentum);
-				vec_t* dJdWsquared = vec_clone(dJdW[j]);
-				vec_apply(dJdWsquared, vec_square_op);
-				vec_mult_scalar(dJdWsquared, 1-momentum);
-				vec_t* newVdW = vec_get_sum(nn->VdW[j], dJdWsquared);
-				vec_copy(nn->VdW[j], newVdW);
-				vec_apply(newVdW, vec_sqrt_op);
-				vec_div_elwise(dJdW[j], newVdW, dJdW[j]);
-				vec_mult_scalar(dJdW[j], learning_rate);
-				vec_sub(nn->W[j], dJdW[j], nn->W[j]);
-
-				//Freeing memory
-				vec_free(&dJdWsquared);
-				vec_free(&newVdW);
-				vec_free(&dJdW[j]);
-
-				//-----------------
-				// Updating biases
-				// ----------------                       element wise square...
-				// newVdB = momentum*VdB + (1-momentum)*(dJdB^2)
-				// newB = B - learning_rate*(dJdB/sqrt(newVdB))
-				vec_mult_scalar(nn->VdB[j], momentum);
-				vec_t* dJdBsquared = vec_clone(dJdB[j]);
-				vec_apply(dJdBsquared, vec_square_op);
-				vec_mult_scalar(dJdBsquared, 1-momentum);
-				vec_t* newVdB = vec_get_sum(nn->VdB[j], dJdBsquared);
-				vec_copy(nn->VdB[j], newVdB);
-				vec_apply(newVdB, vec_sqrt_op);
-				vec_div_elwise(dJdB[j], newVdB, dJdB[j]);
-				vec_mult_scalar(dJdB[j], learning_rate);
-				vec_sub(nn->B[j], dJdB[j], nn->B[j]);
-
-				//Freeing memory
-				vec_free(&dJdBsquared);
-				vec_free(&newVdB);
-				vec_free(&dJdB[j]);
-			}
-			//=================================================================
+			//Freeing memory
+			vec_free(&dJdW[j]);
+			vec_free(&dJdB[j]);
 
 		} // for (j = 0; j < nn->nlayers-1; j++)
 	}
@@ -1162,7 +1095,7 @@ void nn_backpropagation_mem (
 		
 		// Loop variables
 		vec_t* act        = NULL;
-		vec_t* sigPrime_z = NULL;
+		vec_t* grads_z    = NULL;
 		vec_t* delta      = NULL;
 		vec_t* Wt         = NULL;
 
@@ -1174,10 +1107,13 @@ void nn_backpropagation_mem (
 			//-----------------------------------------------------------------
 			// Sigmoid prime of Z f'act(Z[i])
 			// sigPrime_z = vec_apply_out(nn->Z[j], nn_sigmoid_prime);
-			sigPrime_z = vec_apply_out(
-				nn->Z[j], 
-				nn_get_activation_prime(nn->activations[j])
-			);
+			// sigPrime_z = vec_apply_out(
+			// 	nn->Z[j], 
+			// 	nn_get_activation_prime(nn->activations[j])
+			// );
+
+			grads_z = nn_apply_activation_prime(nn, i);
+
 			if (j == 0)
 				act = Xt; // First layer's activation is the data itself
 			else
@@ -1187,9 +1123,9 @@ void nn_backpropagation_mem (
 			//-----------------------------------------------------------------
 			// Calculating and saving dJdW and dJdB
 			//-----------------------------------------------------------------
-			delta = vec_get_mult_elwise(errsign, sigPrime_z);
+			delta = vec_get_mult_elwise(errsign, grads_z);
 
-			vec_free(&sigPrime_z);
+			vec_free(&grads_z);
 			vec_free(&errsign);
 
 			// Weights gradient
@@ -1213,55 +1149,13 @@ void nn_backpropagation_mem (
 			vec_free(&delta);
 			//-----------------------------------------------------------------
 
-			//-----------------------------------------------------------------
-			// RMS LEARNING
-			//-----------------------------------------------------------------
-			//------------------
-			// Updating weights
-			// -----------------                      element wise square...
-			// newVdW = momentum*VdW + (1-momentum)*(dJdW^2)
-			// newW = W - learning_rate*(dJdW/sqrt(newVdW))
-			vec_mult_scalar(nn->VdW[j], momentum);
-
-			vec_t* dJdWsquared = vec_clone(dJdW);
-			vec_apply(dJdWsquared, vec_square_op);
-			vec_mult_scalar(dJdWsquared, 1-momentum);
-
-			vec_t* newVdW = vec_get_sum(nn->VdW[j], dJdWsquared);
-			vec_copy(nn->VdW[j], newVdW);
-			vec_apply(newVdW, vec_sqrt_op);
-
-			vec_div_elwise(dJdW, newVdW, dJdW);
-			vec_mult_scalar(dJdW, learning_rate);
-			vec_sub(nn->W[j], dJdW, nn->W[j]);
+			nn_optimization(
+				nn, dJdW, dJdB,
+				learning_rate, j, i, nn->optimization
+			);
 
 			//Freeing memory
-			vec_free(&dJdWsquared);
-			vec_free(&newVdW);
 			vec_free(&dJdW);
-
-			//-----------------
-			// Updating biases
-			// ----------------                       element wise square...
-			// newVdB = momentum*VdB + (1-momentum)*(dJdB^2)
-			// newB = B - learning_rate*(dJdB/sqrt(newVdB))
-			vec_mult_scalar(nn->VdB[j], momentum);
-
-			vec_t* dJdBsquared = vec_clone(dJdB);
-			vec_apply(dJdBsquared, vec_square_op);
-			vec_mult_scalar(dJdBsquared, 1-momentum);
-
-			vec_t* newVdB = vec_get_sum(nn->VdB[j], dJdBsquared);
-			vec_copy(nn->VdB[j], newVdB);
-			vec_apply(newVdB, vec_sqrt_op);
-
-			vec_div_elwise(dJdB, newVdB, dJdB);
-			vec_mult_scalar(dJdB, learning_rate);
-			vec_sub(nn->B[j], dJdB, nn->B[j]);
-
-			//Freeing memory
-			vec_free(&dJdBsquared);
-			vec_free(&newVdB);
 			vec_free(&dJdB);
 			//-----------------------------------------------------------------
 
@@ -1273,6 +1167,194 @@ void nn_backpropagation_mem (
 	} // for (i = 0; i < num_iterations; i++)
 
 } // void nn_backpropagation_2
+
+
+
+void nn_optimization (
+	neuralnet_t* nn, vec_t* dJdW, vec_t* dJdB,
+	double learning_rate, int layer, int iteration,
+	int optimization_code
+)
+{
+	int line = __LINE__ - 6;
+
+	if (nn == NULL || dJdW == NULL || dJdB == NULL)
+	{
+		ut_errmsg (
+			"Some pointer is NULL.",
+			__FILE__, line, 1
+		);
+	}
+
+	if (layer < 0 || layer >= nn->nlayers-1)
+	{
+		ut_errmsg (
+			"Invalid index for layer.",
+			__FILE__, line, 1
+		);
+	}
+
+	if (optimization_code == NN_NO_OPTIMIZATION)
+	{
+		// Updating weights for current layer
+		vec_mult_scalar(dJdW, learning_rate);
+		vec_sub(nn->W[layer], dJdW, nn->W[layer]);
+
+		// Updating biases for current layer
+		vec_mult_scalar(dJdB, learning_rate);
+		vec_sub(nn->B[layer], dJdB, nn->B[layer]);
+	}
+	else if (optimization_code == NN_MOMENTUM_OPTIMIZATION)
+	{
+		vec_t *alphaVdW, *alphaVdB;
+
+		// Updating weights and biases for current layer
+		//-----------------------------------------------
+		// newVdW = beta1*VdW + (1-beta1)*dJdW
+		// newVdB = beta1*VdB + (1-beta1)*dJdB
+		// newW   = W - alpha*newVdW
+		// newB   = B - alpha*newVdB
+
+		vec_mult_scalar(nn->VdW[layer], nn->momentum_rate);
+		vec_mult_scalar(dJdW, 1-nn->momentum_rate);
+		vec_add(nn->VdW[layer], dJdW, nn->VdW[layer]);
+		alphaVdW = vec_get_scalar_prod(nn->VdW[layer], learning_rate);
+		vec_sub(nn->W[layer], alphaVdW, nn->W[layer]);
+
+		vec_free(&alphaVdW);
+
+		vec_mult_scalar(nn->VdB[layer], nn->momentum_rate);
+		vec_mult_scalar(dJdB, 1-nn->momentum_rate);
+		vec_add(nn->VdB[layer], dJdB, nn->VdB[layer]);
+		alphaVdB = vec_get_scalar_prod(nn->VdB[layer], learning_rate);
+		vec_sub(nn->B[layer], alphaVdB, nn->B[layer]);
+
+		vec_free(&alphaVdB);
+	}
+	else if (optimization_code == NN_RMS_OPTIMIZATION)
+	{
+		vec_t *dJdWsquared, *dJdBsquared;
+		vec_t *newSdW, *newSdB; 
+
+		//------------------
+		// Updating weights
+		// -----------------                      element wise square...
+		// newSdW = beta2*SdW + (1-beta2)*(dJdW^2)
+		// newW = W - alpha*(dJdW/(sqrt(newSdW)+epsilon))
+		vec_mult_scalar(nn->SdW[layer], nn->rms_rate);
+		dJdWsquared = vec_apply_out(dJdW, vec_square_op);
+		vec_mult_scalar(dJdWsquared, 1-nn->rms_rate);
+		newSdW = vec_get_sum(nn->SdW[layer], dJdWsquared);
+		vec_copy(nn->SdW[layer], newSdW);
+		vec_apply(newSdW, vec_sqrt_op);
+		vec_add_scalar(newSdW, NN_EPSILON);
+		vec_div_elwise(dJdW, newSdW, dJdW);
+		vec_mult_scalar(dJdW, learning_rate);
+		vec_sub(nn->W[layer], dJdW, nn->W[layer]);
+
+		//Freeing memory
+		vec_free(&dJdWsquared);
+		vec_free(&newSdW);
+
+		//-----------------
+		// Updating biases
+		// ----------------                       element wise square...
+		// newSdB = beta2*SdB + (1-beta2)*(dJdB^2)
+		// newB = B - alpha*(dJdB/(sqrt(newSdB)+epsilon))
+		vec_mult_scalar(nn->SdB[layer], nn->rms_rate);
+		dJdBsquared = vec_apply_out(dJdB, vec_square_op);
+		vec_mult_scalar(dJdBsquared, 1-nn->rms_rate);
+		newSdB = vec_get_sum(nn->SdB[layer], dJdBsquared);
+		vec_copy(nn->SdB[layer], newSdB);
+		vec_apply(newSdB, vec_sqrt_op);
+		vec_add_scalar(newSdB, NN_EPSILON);
+		vec_div_elwise(dJdB, newSdB, dJdB);
+		vec_mult_scalar(dJdB, learning_rate);
+		vec_sub(nn->B[layer], dJdB, nn->B[layer]);
+
+		//Freeing memory
+		vec_free(&dJdBsquared);
+		vec_free(&newSdB);
+	}
+	else if (optimization_code == NN_ADAM_OPTIMIZATION)
+	{
+		vec_t *dJdWsquared, *dJdBsquared;
+		vec_t *newSdW, *newSdB;
+		int t = iteration;
+
+		float alpha = learning_rate;
+		float beta1 = nn->momentum_rate;
+		float beta2 = nn->rms_rate;
+
+		//------------------
+		// Updating weights
+		// -----------------
+		// newVdW = beta1*VdW + (1-beta1)*dJdW
+		// newSdW = beta2*SdW + (1-beta2)*(dJdW^2)
+		// Bias correction (VdW := VdW/(1-beta1^t)), SdW...
+		// W = W - alpha*(VdW/(sqrt(SdW)+epsilon))
+
+		dJdWsquared = vec_apply_out(dJdW, vec_square_op);
+
+		vec_mult_scalar(nn->VdW[layer], beta1);
+		vec_mult_scalar(dJdW, 1.0-beta1);
+		vec_add(nn->VdW[layer], dJdW, nn->VdW[layer]);
+
+		vec_mult_scalar(nn->SdW[layer], beta2);
+		dJdWsquared = vec_apply_out(dJdW, vec_square_op);
+		vec_mult_scalar(dJdWsquared, 1.0-beta2);
+		newSdW = vec_get_sum(nn->SdW[layer], dJdWsquared);
+		vec_copy(nn->SdW[layer], newSdW);
+
+		// NOT WORKING...
+		// vec_mult_scalar(nn->VdW[layer], (vec_type_t) 1.0/(1.0-pow(beta1,t)));
+		// vec_mult_scalar(nn->SdW[layer], (vec_type_t) 1.0/(1.0-pow(beta2,t)));
+
+		// We'll use dJdW as auxiliar matrix
+		vec_apply(newSdW, vec_sqrt_op);
+		vec_add_scalar(newSdW, NN_EPSILON);
+		vec_div_elwise(nn->VdW[layer], newSdW, dJdW);
+		vec_mult_scalar(dJdW, alpha);
+		vec_sub(nn->W[layer], dJdW, nn->W[layer]);
+
+		vec_free(&dJdWsquared);
+		vec_free(&newSdW);
+
+		//------------------
+		// Updating biases
+		// -----------------
+		// newVdB = beta1*VdB + (1-beta1)*dJdB
+		// newSdB = beta2*SdB + (1-beta2)*(dJdB^2)
+		// Bias correction (VdB := VdB/(1-beta1^t)), SdB...
+		// B = B - alpha*(VdB/(sqrt(SdB)+epsilon))
+
+		dJdBsquared = vec_apply_out(dJdB, vec_square_op);
+
+		vec_mult_scalar(nn->VdB[layer], beta1);
+		vec_mult_scalar(dJdB, 1.0-beta1);
+		vec_add(nn->VdB[layer], dJdB, nn->VdB[layer]);
+
+		vec_mult_scalar(nn->SdB[layer], beta2);
+		dJdBsquared = vec_apply_out(dJdB, vec_square_op);
+		vec_mult_scalar(dJdBsquared, 1.0-beta2);
+		newSdB = vec_get_sum(nn->SdB[layer], dJdBsquared);
+		vec_copy(nn->SdB[layer], newSdB);
+
+		// NOT WORKING...
+		// vec_mult_scalar(nn->VdB[layer], (vec_type_t) 1.0/(1.0-pow(beta1,t)));
+		// vec_mult_scalar(nn->SdB[layer], (vec_type_t) 1.0/(1.0-pow(beta2,t)));
+
+		// We'll use dJdW as auxiliar matrix
+		vec_apply(newSdB, vec_sqrt_op);
+		vec_add_scalar(newSdB, NN_EPSILON);
+		vec_div_elwise(nn->VdB[layer], newSdB, dJdB);
+		vec_mult_scalar(dJdB, alpha);
+		vec_sub(nn->B[layer], dJdB, nn->B[layer]);
+
+		vec_free(&dJdBsquared);
+		vec_free(&newSdB);
+	}
+}
 
 
 
@@ -1356,6 +1438,106 @@ activation_t nn_get_activation_prime (int flag)
 
 
 
+vec_t* nn_apply_activation (
+	neuralnet_t* nn, int layer
+)
+{
+	int line = __LINE__ - 2;
+
+	if (nn == NULL)
+	{
+		ut_errmsg (
+			"The neuralnet_t pointer is NULL.",
+			__FILE__, line, 1
+		);
+	}
+
+	if (layer < 0 || layer >= nn->nlayers-1)
+	{
+		ut_errmsg (
+			"Invalid index for layer.",
+			__FILE__, line, 1
+		);
+	}
+
+	if (nn->Z[layer] == NULL)
+	{
+		ut_errmsg (
+			"nn->Z[layer] is NULL.",
+			__FILE__, line, 1
+		);
+	}
+
+	vec_t* output;
+	int activation_code = nn->activations[layer];
+
+	if (activation_code == NN_SOFTMAX_ACTIVATION)
+	{
+		output = nn_softmax_of_layer(nn,layer);
+	}
+	else 
+	{
+		output = vec_new(nn->Z[layer]->m,nn->Z[layer]->n);
+		vec_apply_to(
+			output, nn->Z[layer],
+			nn_get_activation(nn->activations[layer])
+		);
+	}
+
+	return output;
+}
+
+vec_t* nn_apply_activation_prime (
+	neuralnet_t* nn, int layer
+)
+{
+	int line = __LINE__ - 4;
+
+	if (nn == NULL)
+	{
+		ut_errmsg (
+			"The neuralnet_t pointer is NULL.",
+			__FILE__, line, 1
+		);
+	}
+
+	if (layer < 0 || layer >= nn->nlayers-1)
+	{
+		ut_errmsg (
+			"Invalid index for layer.",
+			__FILE__, line, 1
+		);
+	}
+
+	if (nn->Z[layer] == NULL)
+	{
+		ut_errmsg (
+			"nn->Z[layer] is NULL.",
+			__FILE__, line, 1
+		);
+	}
+
+	vec_t* output;
+	int activation_code = nn->activations[layer];
+
+	if (activation_code == NN_SOFTMAX_ACTIVATION)
+	{
+		output = nn_softmax_prime_of_layer(nn,layer);
+	}
+	else 
+	{
+		output = vec_new(nn->Z[layer]->m,nn->Z[layer]->n);
+		vec_apply_to(
+			output, nn->Z[layer],
+			nn_get_activation_prime(nn->activations[layer])
+		);
+	}
+
+	return output;
+}
+
+
+
 // IDENTITY ACTIVATION ------------------------------------
 vec_type_t nn_identity (vec_type_t k)
 {
@@ -1374,16 +1556,16 @@ vec_type_t nn_identity_prime (vec_type_t k)
 
 
 // ReLU ACTIVATION ----------------------------------------
-const double RELU_THRESHOLD = 1;
+const double RELU_THRESHOLD = 10;
 
 vec_type_t nn_relu (vec_type_t k)
 {
 	double x = (double) k;
-	double y = fmax(0.0,x);
+	double y = k > 0 ? k : 0;
 
 	// Trying to clip...
-	if (y > RELU_THRESHOLD)
-		y = RELU_THRESHOLD;
+	// if (y > RELU_THRESHOLD)
+	// 	y = RELU_THRESHOLD;
 
 	return (vec_type_t) y;
 }
@@ -1392,10 +1574,6 @@ vec_type_t nn_relu_prime (vec_type_t k)
 {
 	double x = (double) k;
 	double y = k > 0 ? 1 : 0;
-
-	// Trying to clip...
-	if (y > RELU_THRESHOLD)
-		y = RELU_THRESHOLD;
 	
 	return (vec_type_t) y;
 }
@@ -1413,8 +1591,13 @@ vec_type_t nn_sigmoid (vec_type_t k)
 
 vec_type_t nn_sigmoid_prime (vec_type_t k)
 {
-	double x = (double) k;
-	double y = exp(-x) / pow(1+exp(-x),2);
+	// double x = (double) k;
+	// double y = exp(-x) / pow(1+exp(-x),2);
+
+	// A little bit more efficient...
+	vec_type_t sig = nn_sigmoid(k);
+	vec_type_t y   = sig * (1.0-sig);
+	
 	return (vec_type_t) y;
 }
 //---------------------------------------------------------
@@ -1425,7 +1608,14 @@ vec_type_t nn_sigmoid_prime (vec_type_t k)
 vec_type_t nn_hyperbolic_tangent (vec_type_t k)
 {
 	double x = (double) k;
-	double y = (exp(x)-exp(-x))/(exp(x)+exp(-x));
+	// double y = (exp(x)-exp(-x))/(exp(x)+exp(-x));
+
+	double expx    = exp(x);
+	double expnegx = exp(-x);
+	
+	// A little bit more efficient...
+	double y = (expx - expnegx) / (expx + expnegx);
+
 	return (vec_type_t) y;
 }
 
@@ -1436,3 +1626,119 @@ vec_type_t nn_hyperbolic_tangent_prime (vec_type_t k)
 	return (vec_type_t) y;
 }
 //---------------------------------------------------------
+
+
+
+vec_t* nn_softmax_of_layer (
+    neuralnet_t* nn, int layer
+)
+{
+	int line = __LINE__ - 4;
+
+	if (nn == NULL)
+	{
+		ut_errmsg (
+			"The neuralnet_t pointer is NULL.",
+			__FILE__, line, 1
+		);
+	}
+
+	if (layer < 0 || layer >= nn->nlayers-1)
+	{
+		ut_errmsg (
+			"Invalid index for layer.",
+			__FILE__, line, 1
+		);
+	}
+
+	if (nn->Z[layer] == NULL)
+	{
+		ut_errmsg (
+			"nn->Z[layer] is NULL.",
+			__FILE__, line, 1
+		);
+	}
+
+	int i, j;
+
+	// Reference: "https://deepnotes.io/softmax-crossentropy"
+	//-------------------------------------------------------
+	// def stable_softmax(X):
+    // 	 exps = np.exp(X - np.max(X))
+    // 	 return exps / np.sum(exps)
+	//-------------------------------------------------------
+
+	// TODO
+
+	// We will create a vector with exp sums...
+	vec_t* output = vec_clone(nn->Z[layer]);
+	vec_apply(output,vec_exp_op);
+	vec_t* sums = vec_get_rows_sums(output);
+
+	for (i = 0; i < output->m; i++)
+	{
+		for (j = 0; j < output->n; j++)
+		{
+			vec_type_t elem = vec_get(output, i,j);
+			vec_type_t sum  = vec_get(sums, i,0);
+			vec_set(output, i,j, elem/sum);
+		}
+	}
+
+	vec_free(&sums);
+
+	return output;
+}
+
+vec_t* nn_softmax_prime_of_layer (
+    neuralnet_t* nn, int layer
+)
+{
+	int line = __LINE__ - 4;
+
+	if (nn == NULL)
+	{
+		ut_errmsg (
+			"The neuralnet_t pointer is NULL.",
+			__FILE__, line, 1
+		);
+	}
+
+	if (layer < 0 || layer >= nn->nlayers-1)
+	{
+		ut_errmsg (
+			"Invalid index for layer.",
+			__FILE__, line, 1
+		);
+	}
+
+	if (nn->Z[layer] == NULL)
+	{
+		ut_errmsg (
+			"nn->Z[layer] is NULL.",
+			__FILE__, line, 1
+		);
+	}
+
+	int i, j;
+
+	// We will create a vector with exp sums...
+	vec_t* output = vec_clone(nn->Z[layer]);
+	vec_apply(output,vec_exp_op);
+	vec_t* sums = vec_get_rows_sums(output);
+
+	for (i = 0; i < output->m; i++)
+	{
+		for (j = 0; j < output->n; j++)
+		{
+			vec_type_t elem  = vec_get(output, i,j);
+			vec_type_t sum   = vec_get(sums, i,0);
+			vec_type_t deriv = (elem * (sum-elem))/(sum*sum);
+			vec_set(output, i,j, deriv);
+		}
+	}
+
+	vec_free(&sums);
+
+	return output;
+}
