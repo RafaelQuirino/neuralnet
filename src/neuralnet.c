@@ -214,6 +214,8 @@ void nn_free (neuralnet_t **nn)
 		vec_free(&(*nn)->A[i]);
 		vec_free(&(*nn)->VdW[i]);
 		vec_free(&(*nn)->VdB[i]);
+		vec_free(&(*nn)->SdW[i]);
+		vec_free(&(*nn)->SdB[i]);
 	}
 
 	vec_free(&(*nn)->yHat);
@@ -222,6 +224,10 @@ void nn_free (neuralnet_t **nn)
 	free((*nn)->B);
 	free((*nn)->Z);
 	free((*nn)->A);
+	free((*nn)->VdW);
+	free((*nn)->VdB);
+	free((*nn)->SdW);
+	free((*nn)->SdB);
 	free((*nn)->topology);
 	free((*nn));
 
