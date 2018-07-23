@@ -1021,7 +1021,6 @@ void nn_backpropagation (
 		// For each layer in the neural net
 		for (j = 0; j < nn->nlayers-1; j++)
 		{
-			
 			nn_optimization(
 				nn, dJdW[j], dJdB[j],
 				learning_rate, j, i, nn->optimization
@@ -1052,7 +1051,7 @@ void nn_backpropagation_mem (
 	int i, j, k;
 
 	// Parameters
-	double momentum = 0.9;
+	double momentum = nn->momentum_rate;
 
 	// For each iteration of backpropagation
 	for (i = 0; i < num_iterations; i++) 
