@@ -94,7 +94,7 @@ int main (int argc, char** argv)
     //-------------------------------------------------------------------------
 	// Testing neural_net.h
 	//-------------------------------------------------------------------------
-    int num_layers = 3;
+    int num_layers = 4;
     vec_type_t learning_rate = 0.001;
 
 	if (mode == NET_TRAIN_MODE)
