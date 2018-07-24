@@ -22,13 +22,14 @@ dataset_t* dat_new ()
     data->Y = NULL;
 
     // Some default values
-    data->size           = 0;
-    data->batch_size     = 128;
-    data->row_offset     = 0;
-    data->current_batch  = 0;
-    data->current_epoch  = 0;
-    data->repeat_flag    = 1;
-    data->reshuffle_flag = 0;
+    data->size               = 0;
+    data->batch_size         = 128;
+    data->row_offset         = 0;
+    data->current_batch      = 0;
+    data->current_epoch      = 0;
+    data->current_iteration  = 0;
+    data->repeat_flag        = 1;
+    data->reshuffle_flag     = 0;
     
     return data;
 }
@@ -54,6 +55,43 @@ void dat_export (dataset_t* data, const char* fname)
 dataset_t* dat_import (const char* fname)
 {
     return NULL;
+}
+
+
+
+void dat_normalize (dataset_t* data)
+{
+    int i, j;
+
+    vec_t* median = vec_get_columns_sums(data->X);
+    vec_mult_scalar(median, 1.0/(vec_type_t)data->X->m);
+
+    for (i = 0; i < data->X->m; i++)
+    {
+        for (j = 0; j < data->X->n; j++)
+        {
+            vec_type_t elem = vec_get(data->X, i,j);
+            vec_type_t mu   = vec_get(median, 0, j);
+            elem -= mu;
+            vec_set(data->X, i,j, elem);
+        }
+    }
+
+    vec_t* xsquared = vec_apply_out(data->X, vec_square_op);
+    vec_t* variance = vec_get_columns_sums(xsquared);
+    vec_mult_scalar(variance, 1.0/(vec_type_t)data->X->m);    
+    vec_free(&xsquared);
+
+    for (i = 0; i < data->X->m; i++)
+    {
+        for (j = 0; j < data->X->n; j++)
+        {
+            vec_type_t elem  = vec_get(data->X, i,j);
+            vec_type_t sigma = vec_get(variance, 0, j);
+            elem /= sigma;
+            vec_set(data->X, i,j, elem);
+        }
+    }
 }
 
 
@@ -102,7 +140,24 @@ void dat_import_labels_array (vec_type_t** labels_arr, int rows, int columns)
 
 void dat_shuffle (dataset_t* data)
 {
+    int i, n = data->X->m;
 
+    // Use a different seed value so that we don't get same
+    // result each time we run this program
+    srand ( time(NULL) );
+ 
+    // Start from the last element and swap one by one. We don't
+    // need to run for the first element that's why i > 0
+    for (i = n-1; i > 0; i--)
+    {
+        // Pick a random index from 0 to i
+        int j = rand() % (i+1);
+ 
+        // Swap arr[i] with the element at random index
+        // swap(&arr[i], &arr[j]);
+        vec_swap_rows(data->X, i, j);
+        vec_swap_rows(data->Y, i, j);
+    }
 }
 
 
@@ -140,9 +195,14 @@ minibatch_t* dat_next_minibatch (dataset_t* data)
 
     minibatch->size = data->batch_size;
 
-    data->current_batch += 1;
+    data->current_batch     += 1;
+    data->current_iteration += 1;
     if ((data->row_offset + data->batch_size) >= data->size)
+    {
+        data->current_batch = 0;
         data->current_epoch += 1;
+        dat_shuffle(data);
+    }
     data->row_offset = (data->row_offset + data->batch_size) % data->size;
 
     return minibatch;
@@ -152,8 +212,8 @@ minibatch_t* dat_next_minibatch (dataset_t* data)
 
 void dat_free_minibatch (minibatch_t** minibatch)
 {
-    vec_free(&(*minibatch)->X);
-    vec_free(&(*minibatch)->Y);
+    vec_free(&((*minibatch)->X));
+    vec_free(&((*minibatch)->Y));
     free(*minibatch);
 }
 
@@ -276,19 +336,21 @@ dataset_t* dat_get_dataset_from_representation_1 (
 )
 {
     int line;
-    int max_chars = 128;
+    int max_chars = 128*5;
     int output_size = 2;
 
     dataset_t* dataset = dat_new();
 
     int num_lines, num_lines_2;
     utext_t* lines  = txt_get_ulines(linesfile, &num_lines);
+    // txt_print_ulines(lines,num_lines);
+    // exit(0);
     utext_t* labels = txt_get_ulines(labelsfile, &num_lines_2);
     line = __LINE__ - 1;
 
     // printf("%d, %d\n", num_lines, num_lines_2);
 
-    //if (num_lines != num_lines_2)
+    if (num_lines != num_lines_2)
     if (abs(num_lines - num_lines_2) > 1) // Hardcoded solution. Needs fixing...
     {
         ut_errmsg(
@@ -311,6 +373,9 @@ dataset_t* dat_get_dataset_from_representation_1 (
 
     txt_free_ulines(&lines, num_lines);
     txt_free_ulines(&labels, num_lines);
+
+    // dat_normalize(dataset);
+    // dat_shuffle(dataset);
 
     return dataset;
 }

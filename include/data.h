@@ -4,6 +4,10 @@ extern "C" {
 #ifndef _DATA_H_
 #define _DATA_H_
 
+#include <time.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <limits.h>
 #include "../include/text.h"
 #include "../include/linalg.h"
@@ -39,6 +43,7 @@ typedef struct
     int row_offset;
     int current_batch;
     int current_epoch;
+    int current_iteration;
 
     // Flags
     int repeat_flag;
@@ -61,6 +66,8 @@ dataset_t* dat_new    ();
 void       dat_free   (dataset_t** data);
 void       dat_export (dataset_t* data, const char* fname);
 dataset_t* dat_import (const char* fname);
+
+void dat_normalize (dataset_t* data);
 
 dataset_t* dat_import_array (
     vec_type_t** features_arr, vec_type_t** labels_arr,
