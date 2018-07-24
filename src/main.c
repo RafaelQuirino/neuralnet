@@ -74,28 +74,12 @@ int main (int argc, char** argv)
 
     dataset_t* dataset = dat_get_dataset_from_representation_1(file, labels);
 
-    minibatch_t* minibatch;
-
-    // minibatch = dat_next_minibatch(dataset); dat_free_minibatch(&minibatch);
-    // minibatch = dat_next_minibatch(dataset); dat_free_minibatch(&minibatch);
-    // minibatch = dat_next_minibatch(dataset); dat_free_minibatch(&minibatch);
-    // minibatch = dat_next_minibatch(dataset); dat_free_minibatch(&minibatch);
-    // minibatch = dat_next_minibatch(dataset); dat_free_minibatch(&minibatch);
-    // minibatch = dat_next_minibatch(dataset); dat_free_minibatch(&minibatch);
-    // minibatch = dat_next_minibatch(dataset); dat_free_minibatch(&minibatch);
-    // minibatch = dat_next_minibatch(dataset); dat_free_minibatch(&minibatch);
-    // minibatch = dat_next_minibatch(dataset);
-    // printf("%d, %d, %d\n", 
-    //     dataset->row_offset, dataset->current_batch+1, dataset->current_epoch+1
-    // );
-
-
 
     //-------------------------------------------------------------------------
 	// Testing neural_net.h
 	//-------------------------------------------------------------------------
-    int num_layers = 4;
-    vec_type_t learning_rate = 0.0002;
+    int num_layers = 5;
+    vec_type_t learning_rate = 0.0001; //will be overwriten...
 
 	if (mode == NET_TRAIN_MODE)
 	{
@@ -109,9 +93,14 @@ int main (int argc, char** argv)
 		{
 			int topology[num_layers];
 			for (i = 0; i < num_layers; i++)
+            {
 				topology[i] = i == num_layers-1 ? 2 : layer_size;
+            }
+            topology[1] = 512;
+            topology[2] = 256;
+            topology[3] = 128;
 
-			nn = nn_new(topology, num_layers, ut_gaussian_rand);
+			nn = nn_new(topology, num_layers);
 		}
 		else
 		{
@@ -127,8 +116,13 @@ int main (int argc, char** argv)
 
 		// Run backpropagation
 		// --------------------
-		nn_backpropagation(
-            nn, dataset->X, dataset->Y, iterations, learning_rate
+		// nn_backpropagation(
+        //     nn, dataset->X, dataset->Y, iterations, learning_rate
+        // );
+
+        dat_shuffle(dataset);
+        nn_backpropagation_sgd(
+            nn, dataset, iterations, learning_rate
         );
 
 		// Export nn and free memory
