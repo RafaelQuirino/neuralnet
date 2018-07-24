@@ -176,10 +176,10 @@ neuralnet_t* nn_new (int topology[], int tsize)
 	newnet->regularization    = NN_L2_REGULARIZATION;
 	newnet->optimization      = NN_ADAM_OPTIMIZATION;
 	
-	newnet->rms_rate            = 0.99;
+	newnet->rms_rate            = 0.9;
 	newnet->momentum_rate       = 0.9;
-	newnet->learning_rate       = 0.0001;
-	newnet->regularization_rate = 0.001;
+	newnet->learning_rate       = 0.001;
+	newnet->regularization_rate = 0.0001;
 
 	// Setting output layer's activation
 	//===================================
