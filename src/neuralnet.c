@@ -1040,6 +1040,8 @@ void nn_backpropagation_sgd (
 	// Variables
 	int i, j;
 	vec_t **dJdW, **dJdB;
+	double costsum  = 0.0;
+	double costmean = 0.0;
 
 	// Parameters
 	double momentum = nn->momentum_rate;
@@ -1052,14 +1054,15 @@ void nn_backpropagation_sgd (
 
 		// Calculate gradients
 		double cost = nn_cost_func_prime(nn, batch->X, batch->Y, &dJdW, &dJdB);
+		costsum += cost;
+		costmean = costsum / (double) (i+1);
 
 		dat_free_minibatch(&batch);
 		
-		const char* spaces = "";
 		printf(
-			"\repoch: %d, batch: %d, iteration: %d, cost: %g%s",
+			"\repoch: %d, batch: %d, iteration: %d, cost: %g, mean: %g",
 			dataset->current_epoch, dataset->current_batch,
-			dataset->current_iteration, cost, spaces
+			dataset->current_iteration, cost, costmean
 		);
 		fflush(stdout);		
 
