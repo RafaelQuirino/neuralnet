@@ -2,12 +2,8 @@
 
 
 
-neuralnet_t* nn_new (int topology[], int tsize, double (*func)())
+neuralnet_t* nn_new (int topology[], int tsize)
 {
-	// Obs.: "func" is a pointer to a function
-	// that generates some value (like gaussian random numbers...).
-	// If it is set to NULL, all weights are going to be set to 1. 
-
 	// Variables
 	int i, line;
 
@@ -59,19 +55,14 @@ neuralnet_t* nn_new (int topology[], int tsize, double (*func)())
 			__FILE__, line, 1
 		);
 	}
+	nn_initialize_weights(newnet);
 	for (i = 0; i < tsize-1; i++) 
 	{
-		newnet->W[i] = vec_new(topology[i],topology[i+1]);
-		if (func == NULL)
-			vec_set_all(newnet->W[i], 1);
-		else
-			vec_set_all_func(newnet->W[i], func);
+		// newnet->W[i] = vec_new(topology[i],topology[i+1]);
+		// vec_set_all_func(newnet->W[i], ut_gaussian_rand);
 
 		newnet->B[i] = vec_new(1,topology[i+1]);
-		if (func == NULL)
-			vec_set_all(newnet->B[i], 1);
-		else
-			vec_set_all_func(newnet->B[i], func);
+		vec_set_all_func(newnet->B[i], ut_gaussian_rand);
 	}
 
 	// Building activity (Z) and activation (A) matrices...
@@ -182,13 +173,13 @@ neuralnet_t* nn_new (int topology[], int tsize, double (*func)())
 	//================
 	newnet->cost_function     = NN_SQUARE_ERROR;
 	newnet->output_activation = NN_SOFTMAX_ACTIVATION;
-	newnet->regularization    = NN_NO_REGULARIZATION;
+	newnet->regularization    = NN_L2_REGULARIZATION;
 	newnet->optimization      = NN_ADAM_OPTIMIZATION;
 	
-	newnet->rms_rate            = 0.9;
+	newnet->rms_rate            = 0.99;
 	newnet->momentum_rate       = 0.9;
-	newnet->learning_rate       = 0.001;
-	newnet->regularization_rate = 0.0001;
+	newnet->learning_rate       = 0.0001;
+	newnet->regularization_rate = 0.001;
 
 	// Setting output layer's activation
 	//===================================
@@ -455,7 +446,7 @@ neuralnet_t* nn_import (const char* fname)
 	}
 
 	// Create new neuralnet_t*
-	neuralnet_t* nn = nn_new(topology, numlayers, NULL);
+	neuralnet_t* nn = nn_new(topology, numlayers);
 
 	for (i = 0; i < numlayers-1; i++)
 	{
@@ -561,6 +552,29 @@ neuralnet_t* nn_import (const char* fname)
 
 
 
+void nn_initialize_weights (neuralnet_t* nn)
+{
+	int i, j, k;
+
+	for (k = 0; k < nn->nlayers-1; k++) 
+	{
+		nn->W[k] = vec_new(nn->topology[k],nn->topology[k+1]);
+
+		for (i = 0; i < nn->W[k]->m; i++)
+		{
+			for (j = 0; j < nn->W[k]->n; j++)
+			{
+				vec_type_t val = (vec_type_t) ut_gaussian_rand();
+				float init_term = sqrt(1.0/(float)nn->topology[k]);
+				val *= (vec_type_t) init_term;
+				vec_set(nn->W[k],i,j,val);
+			}
+		}
+	}
+}
+
+
+
 void nn_set_cost_function (neuralnet_t* nn, int cost_func_code)
 {
 
@@ -630,13 +644,8 @@ vec_t* nn_forward (neuralnet_t* nn, vec_t* data)
 		for (row = 0; row < nn->Z[i]->m; row++)
 			vec_sum_row(nn->Z[i], row, nn->B[i]->vec);
 
-		// Last, make A[i] = fact(Z[i]),
-		// where fact is the activation function
-		// nn->A[i] = vec_apply_out(nn->Z[i], nn_sigmoid);
-		// nn->A[i] = vec_apply_out(
-		// 	nn->Z[i], 
-		// 	nn_get_activation(nn->activations[i])
-		// );
+		// Last, make A[i] = f(Z[i]),
+		// where f is the activation function
 		nn->A[i] = nn_apply_activation(nn, i);
 
 		// Update the layer input to be
@@ -694,13 +703,8 @@ vec_t* nn_feed_forward (neuralnet_t* nn, vec_t* data)
 		for (row = 0; row < nn->Z[i]->m; row++)
 			vec_sum_row (nn->Z[i], row, nn->B[i]->vec);
 
-		// Last, make Z[i] = fact(Z[i]),
-		// where fact is the activation function
-		// vec_apply_to (nn->Z[i], nn->Z[i], nn_sigmoid);
-		// vec_apply_to (
-		// 	nn->Z[i], nn->Z[i], 
-		// 	nn_get_activation(nn->activations[i])
-		// );
+		// Last, make Z[i] = f(Z[i]),
+		// where f is the activation function
 		nn->Z[i] = nn_apply_activation(nn, i);
 
 		// Update the layer input to be
@@ -723,21 +727,11 @@ vec_t* nn_feed_forward (neuralnet_t* nn, vec_t* data)
 
 
 
-// vec_type_t nn_cost_func (neuralnet_t* nn, vec_t* X, vec_t* Y)
 double nn_cost_func (
 	neuralnet_t* nn, vec_t* y, vec_t* yHat,
 	int funcflag
 )
 {
-	// vec_t* yHat = nn_forward(nn,X);
-	
-	// // (Y - yHat) ^ 2
-	// vec_t* Y_yHat = vec_get_diff(Y,yHat);
-	// vec_free(&yHat);
-	// vec_apply(Y_yHat, vec_square_op);
-	// double cost = 0.5 * vec_inner_sum(Y_yHat);
-	// vec_free(&Y_yHat);
-
 	double cost = 0.0;
 
 	if (funcflag == NN_SQUARE_ERROR)
@@ -804,8 +798,11 @@ double nn_cost_func (
 		cost = (-1.0/(vec_type_t)y->m) * vec_inner_sum(aux1);
 		
 		vec_free(&aux1);
+		vec_free(&aux2);
 		vec_free(&ylnyHat);
 	}
+
+	cost += (double) nn_regularization_term(nn);
 	
 	return cost;
 }
@@ -889,12 +886,6 @@ vec_type_t nn_cost_func_prime (
 	//-----------------------------------------------------
 	// CALCULATE THE COST FOR OUTPUT
 	//-----------------------------------------------------
-	// // (y - yHat) ^ 2
-	// vec_t* y_yHat_tmp = vec_get_diff(Y,nn->yHat);
-	// vec_apply(y_yHat_tmp, vec_square_op);
-	// double cost = 0.5 * vec_inner_sum(y_yHat_tmp);
-	// vec_free(&y_yHat_tmp);
-
 	double cost = nn_cost_func(
 		nn,Y,nn->yHat,
 		nn->cost_function
@@ -923,16 +914,11 @@ vec_type_t nn_cost_func_prime (
 	vec_t* grads_z    = NULL;
 	vec_t* delta      = NULL;
 	vec_t* Wt         = NULL;
+	vec_t* Waux       = NULL;
 	
 	
 	
 	// COST FUNCTION DERIVATIVE ---------------------------
-	// First error signal, -(y - yHat),
-	// derivative of half squared error
-	// vec_t* _y_yHat = vec_get_diff(Y,nn->yHat);
-	// vec_mult_scalar(_y_yHat,-1);
-
-	// Cost function derivative goes here
 	// vec_t* errsign = _y_yHat;
 	vec_t* errsign = nn_cost_func_gradient(
 		nn,Y,nn->yHat,
@@ -948,12 +934,6 @@ vec_type_t nn_cost_func_prime (
 		//---------------------------------------------------------------------
 		// Prepare matrices 
 		//---------------------------------------------------------------------
-		// Sigmoid prime of Z f'act(Z[i])
-		// sigPrime_z = vec_apply_out(nn->Z[i], nn_sigmoid_prime);
-		// grads_z = vec_apply_out(
-		// 	nn->Z[i], nn_get_activation_prime(nn->activations[i])
-		// );
-
 		grads_z = nn_apply_activation_prime(nn, i);
 		
 		if (i == 0)
@@ -971,6 +951,14 @@ vec_type_t nn_cost_func_prime (
 
 		// Weights gradient
 		dJdWs[i] = vec_get_dot(act, delta);
+
+		// Regularization
+		if (nn->regularization == NN_L2_REGULARIZATION)
+		{
+			Waux = vec_get_scalar_prod(nn->W[i], nn->regularization_rate);
+			vec_add(dJdWs[i], Waux, dJdWs[i]);
+			vec_free(&Waux);
+		}
 
 		// Bias gradient, reference below...
 		// "https://datascience.stackexchange.com/questions/20139/
@@ -1038,6 +1026,58 @@ void nn_backpropagation (
 
 		} // for (j = 0; j < nn->nlayers-1; j++)
 	}
+}
+
+
+
+void nn_backpropagation_sgd (
+	neuralnet_t* nn,
+	dataset_t* dataset, 
+	int num_iterations,
+	vec_type_t learning_rate
+)
+{
+	// Variables
+	int i, j;
+	vec_t **dJdW, **dJdB;
+
+	// Parameters
+	double momentum = nn->momentum_rate;
+	learning_rate   = nn->learning_rate; //overwriting...
+
+	// For each iteration of backpropagation
+	for (i = 0; i < num_iterations; i++) 
+	{
+		minibatch_t* batch = dat_next_minibatch(dataset);
+
+		// Calculate gradients
+		double cost = nn_cost_func_prime(nn, batch->X, batch->Y, &dJdW, &dJdB);
+
+		dat_free_minibatch(&batch);
+		
+		const char* spaces = "";
+		printf(
+			"\repoch: %d, batch: %d, iteration: %d, cost: %g%s",
+			dataset->current_epoch, dataset->current_batch,
+			dataset->current_iteration, cost, spaces
+		);
+		fflush(stdout);		
+
+		// For each layer in the neural net
+		for (j = 0; j < nn->nlayers-1; j++)
+		{
+			nn_optimization(
+				nn, dJdW[j], dJdB[j],
+				learning_rate, j, i, nn->optimization
+			);
+
+			//Freeing memory
+			vec_free(&dJdW[j]);
+			vec_free(&dJdB[j]);
+
+		} // for (j = 0; j < nn->nlayers-1; j++)
+	}
+	printf("\n");
 }
 
 
@@ -1110,13 +1150,6 @@ void nn_backpropagation_mem (
 			//-----------------------------------------------------------------
 			// Prepare matrices 
 			//-----------------------------------------------------------------
-			// Sigmoid prime of Z f'act(Z[i])
-			// sigPrime_z = vec_apply_out(nn->Z[j], nn_sigmoid_prime);
-			// sigPrime_z = vec_apply_out(
-			// 	nn->Z[j], 
-			// 	nn_get_activation_prime(nn->activations[j])
-			// );
-
 			grads_z = nn_apply_activation_prime(nn, i);
 
 			if (j == 0)
@@ -1299,14 +1332,14 @@ void nn_optimization (
 		// Bias correction (VdW := VdW/(1-beta1^t)), SdW...
 		// W = W - alpha*(VdW/(sqrt(SdW)+epsilon))
 
+		// Calculate dJdW^2 before losing dJdW...
 		dJdWsquared = vec_apply_out(dJdW, vec_square_op);
 
 		vec_mult_scalar(nn->VdW[layer], beta1);
-		vec_mult_scalar(dJdW, 1.0-beta1);
+		vec_mult_scalar(dJdW, 1.0-beta1); // lost dJdW...
 		vec_add(nn->VdW[layer], dJdW, nn->VdW[layer]);
 
 		vec_mult_scalar(nn->SdW[layer], beta2);
-		dJdWsquared = vec_apply_out(dJdW, vec_square_op);
 		vec_mult_scalar(dJdWsquared, 1.0-beta2);
 		newSdW = vec_get_sum(nn->SdW[layer], dJdWsquared);
 		vec_copy(nn->SdW[layer], newSdW);
@@ -1746,4 +1779,28 @@ vec_t* nn_softmax_prime_of_layer (
 	vec_free(&sums);
 
 	return output;
+}
+
+
+
+vec_type_t nn_regularization_term (neuralnet_t* nn)
+{
+	int i;
+	vec_type_t sum    = 0.0;
+	vec_type_t result = 0.0;
+	vec_t* wsquared   = NULL;
+
+	if (nn->regularization == NN_L2_REGULARIZATION)
+	{
+		for (i = 0; i < nn->nlayers-1; i++)
+		{
+			wsquared = vec_apply_out(nn->W[i], vec_square_op);
+			sum += vec_inner_sum(wsquared);
+			vec_free(&wsquared);
+		}
+
+		sum *= nn->regularization_rate;
+	}
+
+	return result;
 }
