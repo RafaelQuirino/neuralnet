@@ -29,7 +29,7 @@ arr1.each_with_index do |item, index|
 			if (printfn == "true")
 				line = `sed -n #{index+1}p #{file3}`
 				puts "#{index+1} -> #{arr2[index]}, #{arr1[index]}"
-				puts "[#{line.gsub("\n","")}]\n"
+				puts "[#{line.gsub("\n","")}]\n\n"
 			end
 		else
 			fp += 1
@@ -38,7 +38,7 @@ arr1.each_with_index do |item, index|
 			if (printfp == "true")
                 line = `sed -n #{index+1}p #{file3}`
                 puts "#{index+1} -> #{arr2[index]}, #{arr1[index]}"
-                puts "[#{line.gsub("\n","")}]\n"
+                puts "[#{line.gsub("\n","")}]\n\n"
             end
 		end
 	end
