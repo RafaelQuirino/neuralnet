@@ -75,6 +75,8 @@ void vec_push_row        (vec_t* vec, vec_type_t* arr, int arrsize);
 void vec_pop_row         (vec_t* vec, vec_type_t* arr);
 void vec_push_column     (vec_t* vec, vec_type_t* arr, int arrsize);
 void vec_pop_column      (vec_t* vec, vec_type_t* arr);
+
+void vec_swap_rows       (vec_t* vec, int i, int j);
 //-----------------------------------------------------------------------------
 
 void   vec_copy               (vec_t* dest, vec_t* src);

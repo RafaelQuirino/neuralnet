@@ -270,6 +270,23 @@ void vec_pop_column (vec_t* vec, vec_type_t* arr)
 
 }
 
+
+
+void vec_swap_rows (vec_t* vec, int i1, int i2)
+{
+    int j;
+
+    for (j = 0; j < vec->n; j++)
+    {
+        vec_type_t tmp1 = vec_get(vec, i1,j);
+        vec_type_t tmp2 = vec_get(vec, i2,j);
+        vec_set(vec, i1,j, tmp2);
+        vec_set(vec, i2,j, tmp1);
+    }
+}
+
+
+
 void vec_copy (vec_t* dest, vec_t* src)
 {
     int line = __LINE__ - 2;
