@@ -96,9 +96,9 @@ int main (int argc, char** argv)
             {
 				topology[i] = i == num_layers-1 ? 2 : layer_size;
             }
-            topology[1] = 512;
-            topology[2] = 256;
-            topology[3] = 128;
+            // topology[1] = 512;
+            // topology[2] = 256;
+            // topology[3] = 128;
 
 			nn = nn_new(topology, num_layers);
 		}
