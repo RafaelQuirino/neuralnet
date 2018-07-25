@@ -757,7 +757,7 @@ vec_t* vec_get_rows_max (vec_t* A)
     int i;
     vec_t* rows_max = vec_new(A->m,1);
     for (i = 0; i < A->m; i++)
-        vec_set(A,i,0,vec_row_max(A,i));
+        vec_set(rows_max,i,0,vec_row_max(A,i));
     
     return rows_max;
 }
