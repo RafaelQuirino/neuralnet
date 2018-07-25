@@ -64,6 +64,9 @@ int main (int argc, char** argv)
     // vec_set_row(B, 4, 5);
     // vec_print(B);
 
+    // vec_t* Bt = vec_transposed(B);
+    // vec_print(Bt);
+
     // vec_t* C = vec_clone_portion(B, 1, 3);
     // vec_print(C);
 
@@ -120,6 +123,7 @@ int main (int argc, char** argv)
         //     nn, dataset->X, dataset->Y, iterations, learning_rate
         // );
 
+        // nn_softmax_of_layer(nn,0);
         dat_shuffle(dataset);
         nn_backpropagation_sgd(
             nn, dataset, iterations, learning_rate
@@ -148,7 +152,7 @@ int main (int argc, char** argv)
 
         // Print estimations for class 1
 		for (i = 0; i < output->m; i++) {
-			printf("%g", vec_get(output,i,0));
+			printf("%g %g", vec_get(output,i,0), vec_get(output,1,1));
 			printf("\n");
 		}
 	}

@@ -634,7 +634,7 @@ vec_t* nn_forward (neuralnet_t* nn, vec_t* data)
 	for (i = 0; i < nn->nlayers-1; i++) 
 	{	
 		//-------------------------------------
-		// Calculate Z[i] and A[i] = fact(Z[i])
+		// Calculate Z[i] and A[i] = f(Z[i])
 		//-------------------------------------
 
 		// First, Z[i] = layerInput * nn->W[i]
@@ -814,25 +814,29 @@ vec_t* nn_cost_func_gradient (
 	int funcflag
 )
 {
-	vec_t* grads = vec_new(y->m,y->n);
+	vec_t* grads;
 
 	if (funcflag == NN_SQUARE_ERROR)
 	{
+		grads = vec_new(y->m,y->n);
 		vec_sub(y, nn->yHat, grads);
 		vec_mult_scalar(grads,-2);
 	}
 	else if (funcflag == NN_HALF_SQUARE_ERROR)
 	{
+		grads = vec_new(y->m,y->n);
 		vec_sub(y, nn->yHat, grads);
 		vec_mult_scalar(grads,-1);
 	}
 	else if (funcflag == NN_MEAN_SQUARE_ERROR)
 	{
+		grads = vec_new(y->m,y->n);
 		vec_sub(y, nn->yHat, grads);
 		vec_mult_scalar(grads,-(2/(vec_type_t)y->m));
 	}
 	else if (funcflag == NN_HALF_MEAN_SQUARE_ERROR)
 	{
+		grads = vec_new(y->m,y->n);
 		vec_sub(y, nn->yHat, grads);
 		vec_mult_scalar(grads,-(1/(vec_type_t)y->m));
 	}
@@ -847,6 +851,9 @@ vec_t* nn_cost_func_gradient (
 	// J = -1/n * Sum{y/yHat + (1-y)/(1-yHat)}
 	else if (funcflag == NN_BINARY_CROSS_ENTROPY)
 	{
+		grads = vec_new(y->m,y->n);
+		vec_set_all(grads,0);
+
 		// aux1 := (1-y)/(1-yHat)
 		vec_t* aux1 = vec_get_scalar_prod(y,-1);
 		vec_t* aux2 = vec_get_scalar_prod(nn->yHat,-1);
@@ -1060,9 +1067,10 @@ void nn_backpropagation_sgd (
 		dat_free_minibatch(&batch);
 		
 		printf(
-			"\repoch: %d, batch: %d, iteration: %d, cost: %g, mean: %g",
+			"\repoch: %4d, batch: %4d, iteration: %4d, cost: %5g, mean: %5g%s",
 			dataset->current_epoch, dataset->current_batch,
-			dataset->current_iteration, cost, costmean
+			dataset->current_iteration, cost, costmean,
+			"     "
 		);
 		fflush(stdout);		
 
@@ -1483,7 +1491,7 @@ vec_t* nn_apply_activation (
 	neuralnet_t* nn, int layer
 )
 {
-	int line = __LINE__ - 2;
+	int line = __LINE__ - 4;
 
 	if (nn == NULL)
 	{
@@ -1674,31 +1682,31 @@ vec_t* nn_softmax_of_layer (
     neuralnet_t* nn, int layer
 )
 {
-	int line = __LINE__ - 4;
+	// int line = __LINE__ - 4;
 
-	if (nn == NULL)
-	{
-		ut_errmsg (
-			"The neuralnet_t pointer is NULL.",
-			__FILE__, line, 1
-		);
-	}
+	// if (nn == NULL)
+	// {
+	// 	ut_errmsg (
+	// 		"The neuralnet_t pointer is NULL.",
+	// 		__FILE__, line, 1
+	// 	);
+	// }
 
-	if (layer < 0 || layer >= nn->nlayers-1)
-	{
-		ut_errmsg (
-			"Invalid index for layer.",
-			__FILE__, line, 1
-		);
-	}
+	// if (layer < 0 || layer >= nn->nlayers-1)
+	// {
+	// 	ut_errmsg (
+	// 		"Invalid index for layer.",
+	// 		__FILE__, line, 1
+	// 	);
+	// }
 
-	if (nn->Z[layer] == NULL)
-	{
-		ut_errmsg (
-			"nn->Z[layer] is NULL.",
-			__FILE__, line, 1
-		);
-	}
+	// if (nn->Z[layer] == NULL)
+	// {
+	// 	ut_errmsg (
+	// 		"nn->Z[layer] is NULL.",
+	// 		__FILE__, line, 1
+	// 	);
+	// }
 
 	int i, j;
 
@@ -1711,8 +1719,32 @@ vec_t* nn_softmax_of_layer (
 
 	// TODO
 
+	// vec_t* B = vec_new(5,4);
+	// vec_set_row(B, 0, 3000);
+    // vec_set_row(B, 1, 2000);
+    // vec_set_row(B, 2, 7000);
+    // vec_set_row(B, 3, 4000);
+    // vec_set_row(B, 4, 9000);
+	// vec_t* x = vec_transposed(B);
+	// vec_print(x);
+
 	// We will create a vector with exp sums...
+	// vec_t* output = vec_clone(x);//nn->Z[layer]);
 	vec_t* output = vec_clone(nn->Z[layer]);
+
+	// vec_t* rowsmax = vec_get_rows_max(output);
+
+	// for (i = 0; i < output->m; i++)
+	// {
+	// 	for (j = 0; j < output->n; j++)
+	// 	{
+	// 		vec_type_t elem = vec_get
+	// 	}
+	// }
+	
+	// vec_type_t themax = vec_max(output);
+	// vec_sub_scalar(output,themax);
+
 	vec_apply(output,vec_exp_op);
 	vec_t* sums = vec_get_rows_sums(output);
 
@@ -1727,6 +1759,9 @@ vec_t* nn_softmax_of_layer (
 	}
 
 	vec_free(&sums);
+
+	// vec_print(output);
+	// exit(0);
 
 	return output;
 }
