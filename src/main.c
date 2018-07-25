@@ -123,7 +123,6 @@ int main (int argc, char** argv)
         //     nn, dataset->X, dataset->Y, iterations, learning_rate
         // );
 
-        // nn_softmax_of_layer(nn,0);
         dat_shuffle(dataset);
         nn_backpropagation_sgd(
             nn, dataset, iterations, learning_rate
@@ -150,9 +149,9 @@ int main (int argc, char** argv)
 		// Feed data forward
 		vec_t* output = nn_feed_forward(nn, dataset->X);
 
-        // Print estimations for class 1
+        // Print estimations
 		for (i = 0; i < output->m; i++) {
-			printf("%g %g", vec_get(output,i,0), vec_get(output,1,1));
+			printf("%g %g", vec_get(output,i,0), vec_get(output,i,1));
 			printf("\n");
 		}
 	}

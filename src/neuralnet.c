@@ -179,7 +179,7 @@ neuralnet_t* nn_new (int topology[], int tsize)
 	newnet->rms_rate            = 0.9;
 	newnet->momentum_rate       = 0.9;
 	newnet->learning_rate       = 0.001;
-	newnet->regularization_rate = 0.0001;
+	newnet->regularization_rate = 0.001;
 
 	// Setting output layer's activation
 	//===================================
@@ -1682,31 +1682,31 @@ vec_t* nn_softmax_of_layer (
     neuralnet_t* nn, int layer
 )
 {
-	// int line = __LINE__ - 4;
+	int line = __LINE__ - 4;
 
-	// if (nn == NULL)
-	// {
-	// 	ut_errmsg (
-	// 		"The neuralnet_t pointer is NULL.",
-	// 		__FILE__, line, 1
-	// 	);
-	// }
+	if (nn == NULL)
+	{
+		ut_errmsg (
+			"The neuralnet_t pointer is NULL.",
+			__FILE__, line, 1
+		);
+	}
 
-	// if (layer < 0 || layer >= nn->nlayers-1)
-	// {
-	// 	ut_errmsg (
-	// 		"Invalid index for layer.",
-	// 		__FILE__, line, 1
-	// 	);
-	// }
+	if (layer < 0 || layer >= nn->nlayers-1)
+	{
+		ut_errmsg (
+			"Invalid index for layer.",
+			__FILE__, line, 1
+		);
+	}
 
-	// if (nn->Z[layer] == NULL)
-	// {
-	// 	ut_errmsg (
-	// 		"nn->Z[layer] is NULL.",
-	// 		__FILE__, line, 1
-	// 	);
-	// }
+	if (nn->Z[layer] == NULL)
+	{
+		ut_errmsg (
+			"nn->Z[layer] is NULL.",
+			__FILE__, line, 1
+		);
+	}
 
 	int i, j;
 
@@ -1717,37 +1717,25 @@ vec_t* nn_softmax_of_layer (
     // 	 return exps / np.sum(exps)
 	//-------------------------------------------------------
 
-	// TODO
-
-	// vec_t* B = vec_new(5,4);
-	// vec_set_row(B, 0, 3000);
-    // vec_set_row(B, 1, 2000);
-    // vec_set_row(B, 2, 7000);
-    // vec_set_row(B, 3, 4000);
-    // vec_set_row(B, 4, 9000);
-	// vec_t* x = vec_transposed(B);
-	// vec_print(x);
-
 	// We will create a vector with exp sums...
-	// vec_t* output = vec_clone(x);//nn->Z[layer]);
 	vec_t* output = vec_clone(nn->Z[layer]);
 
-	// vec_t* rowsmax = vec_get_rows_max(output);
+	// Making softmax numerically stable...
+	vec_t* rowsmax = vec_get_rows_max(output);
+	for (i = 0; i < output->m; i++)
+	{
+		for (j = 0; j < output->n; j++)
+		{
+			vec_type_t elem = vec_get(output,i,j);
+			vec_type_t rowmax = vec_get(rowsmax,i,0);
+			vec_set(output,i,j, elem-rowmax);
+		}
+	}
+	vec_free(&rowsmax);
 
-	// for (i = 0; i < output->m; i++)
-	// {
-	// 	for (j = 0; j < output->n; j++)
-	// 	{
-	// 		vec_type_t elem = vec_get
-	// 	}
-	// }
-	
-	// vec_type_t themax = vec_max(output);
-	// vec_sub_scalar(output,themax);
-
+	// Calculating softmax output
 	vec_apply(output,vec_exp_op);
 	vec_t* sums = vec_get_rows_sums(output);
-
 	for (i = 0; i < output->m; i++)
 	{
 		for (j = 0; j < output->n; j++)
@@ -1757,11 +1745,7 @@ vec_t* nn_softmax_of_layer (
 			vec_set(output, i,j, elem/sum);
 		}
 	}
-
 	vec_free(&sums);
-
-	// vec_print(output);
-	// exit(0);
 
 	return output;
 }
