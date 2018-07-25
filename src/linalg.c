@@ -631,6 +631,66 @@ vec_type_t vec_min (vec_t* A)
     return themin;
 }
 
+vec_type_t vec_row_max (vec_t* A, int row)
+{
+    int line = __LINE__ - 2;
+    if (A == NULL) 
+    {
+        ut_errmsg (
+            "Pointer vec_t* is NULL.",
+            __FILE__, line, 1
+        );
+    }
+    if (row < 0 || row >= A->m)
+    {
+        ut_errmsg (
+            "Invalid row index.",
+            __FILE__, line, 1
+        );
+    }
+
+    int i, j;
+    vec_type_t themax = vec_get(A,row,0);
+    for (j = 0; j < A->n; j++) 
+    {
+        vec_type_t k = vec_get(A,row,j);
+        if (k > themax)
+            themax = k;
+    }
+
+    return themax;
+}
+
+vec_type_t vec_row_min (vec_t* A, int row)
+{
+    int line = __LINE__ - 2;
+    if (A == NULL) 
+    {
+        ut_errmsg (
+            "Pointer vec_t* is NULL.",
+            __FILE__, line, 1
+        );
+    }
+    if (row < 0 || row >= A->m)
+    {
+        ut_errmsg (
+            "Invalid row index.",
+            __FILE__, line, 1
+        );
+    }
+
+    int i, j;
+    vec_type_t themin = vec_get(A,row,0);
+    for (j = 0; j < A->n; j++) 
+    {
+        vec_type_t k = vec_get(A,row,j);
+        if (k < themin)
+            themin = k;
+    }
+
+    return themin;
+}
+
 vec_type_t vec_inner_sum (vec_t* A)
 {
     int line = __LINE__ - 2;
@@ -681,6 +741,25 @@ vec_t* vec_get_rows_sums (vec_t* A)
     }
 
     return newvec;
+}
+
+vec_t* vec_get_rows_max (vec_t* A)
+{
+    int line = __LINE__ - 2;
+    if (A == NULL) 
+    {
+        ut_errmsg (
+            "Pointer vec_t* is NULL.",
+            __FILE__, line, 1
+        );
+    }
+
+    int i;
+    vec_t* rows_max = vec_new(A->m,1);
+    for (i = 0; i < A->m; i++)
+        vec_set(A,i,0,vec_row_max(A,i));
+    
+    return rows_max;
 }
 
 vec_t* vec_get_columns_sums (vec_t* A)

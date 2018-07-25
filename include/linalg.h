@@ -93,8 +93,11 @@ void   vec_print_bitmap       (vec_t* bitmap, int row, int rows, int columns);
 //=============================================================================
 vec_type_t vec_max              (vec_t* A);
 vec_type_t vec_min              (vec_t* A);
+vec_type_t vec_row_max          (vec_t* A, int row);
+vec_type_t vec_row_min          (vec_t* A, int row);
 vec_type_t vec_inner_sum        (vec_t* A);
 vec_t*     vec_get_rows_sums    (vec_t* A);
+vec_t*     vec_get_rows_max     (vec_t* A);
 vec_t*     vec_get_columns_sums (vec_t* A);
 
 //=============================================================================
