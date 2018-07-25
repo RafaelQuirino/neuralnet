@@ -51,8 +51,8 @@ arr1.each_with_index do |item, index|
 	# next
 
 	# condition = arr1[index][0] > arr1[index][1]
-	# condition = (arr1[index][1] - arr1[index][0]) < 0.001
-	condition = true
+	condition = (arr1[index][1] - arr1[index][0]) < 0.01
+	# condition = true
 
 	if (
 		(arr1[index][0] >= threshold and arr2[index] == 1) or
