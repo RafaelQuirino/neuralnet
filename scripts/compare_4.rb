@@ -5,11 +5,16 @@ printfp = ARGV[3]
 printfn = ARGV[4]
 #threshold = ARGV[4]
 
-#arr1 = file1.split("\n").map{|x| x.to_f}
+# arr1 = file1.split("\n").map{|x| x.to_f}
 arr1 = file1.split("\n")
 arr1.each_with_index do |item,index|
 	arr1[index] = item.split(" ").map{|x| x.to_f}
 end
+
+# arr1.each_with_index do |item,index|
+# 	puts "[#{item[0]},#{item[1]}]"
+# end
+# exit
 
 arr2 = file2.split("\n").map{|x| x.to_i}
 
@@ -21,8 +26,10 @@ fparr = []
 threshold = ARGV[5].to_f
 arr1.each_with_index do |item, index|
 	msg = ""
-	if (item[0] >= threshold and arr2[index] == 1) or
-	   (item[0] < threshold and arr2[index] == 0)
+	# if (item >= threshold and arr2[index] == 1) or
+	#    (item < threshold and arr2[index] == 0)
+	if ((item[0] > item[1]) and arr2[index] == 1) or
+	   ((item[0] < item[1]) and arr2[index] == 0)
 		acertou += 1
 		msg += "A - "
 	else
