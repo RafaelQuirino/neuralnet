@@ -337,6 +337,7 @@ dataset_t* dat_get_dataset_from_representation_1 (
 {
     int line;
     int max_chars = 160*7;//128*5;
+    // int max_chars = 128*5;
     int output_size = 2;
 
     dataset_t* dataset = dat_new();
