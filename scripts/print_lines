@@ -1,0 +1,7 @@
+#!/bin/bash
+
+FILE=$1
+LIM1=$2
+LIM2=$3
+
+sed -n ${LIM1},${LIM2}p ${FILE}
