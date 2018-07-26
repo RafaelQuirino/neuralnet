@@ -9,11 +9,28 @@
 #include "../include/data.h"
 #include "../include/linalg.h"
 #include "../include/neuralnet.h"
+#include "../include/autoencoder.h"
 
 
 
 #define NET_TRAIN_MODE 0
 #define NET_TEST_MODE  1
+#define AE_TRAIN_MODE  2
+#define AE_TEST_MODE   3
+
+
+
+// HELPER FUNCTIONS
+
+void print_topology (neuralnet_t* nn)
+{
+    // Print topology
+    int i;
+    fprintf(stderr, "\nnlayers : %d\ntopology: _", nn->nlayers);
+    for (i = 0; i < nn->nlayers; i++)
+        fprintf(stderr, "%d_", nn->topology[i]);
+    fprintf(stderr, "\n\n");
+}
 
 
 
@@ -43,53 +60,24 @@ int main (int argc, char** argv)
 
     // Variables
     int i, j;
-
-
-
-    // // Testing linalg.h
-    // vec_t* A = vec_new(1,5);
-    // vec_t* B = vec_new(5,4);
-    // vec_set_all(A,1);
-    // vec_set_all(B,3);
-    // vec_print(A);
-    // vec_print(B);
-
-    // vec_t* AB = vec_get_dot(A,B);
-    // vec_print(AB);
-
-    // vec_set_row(B, 0, 1);
-    // vec_set_row(B, 1, 2);
-    // vec_set_row(B, 2, 3);
-    // vec_set_row(B, 3, 4);
-    // vec_set_row(B, 4, 5);
-    // vec_print(B);
-
-    // vec_t* Bt = vec_transposed(B);
-    // vec_print(Bt);
-
-    // vec_t* C = vec_clone_portion(B, 1, 3);
-    // vec_print(C);
-
-    // vec_t* D = vec_clone_portion_circ(B, 2, 9);
-    // vec_print(D);
+    int num_layers;
+    vec_type_t learning_rate;
 
 
 
     dataset_t* dataset = dat_get_dataset_from_representation_1(file, labels);
 
-
     //-------------------------------------------------------------------------
 	// Testing neural_net.h
 	//-------------------------------------------------------------------------
-    int num_layers = 5;
-    vec_type_t learning_rate = 0.0001; //will be overwriten...
+    num_layers = 4;
+    learning_rate = 0.001; //will be overwriten...
 
 	if (mode == NET_TRAIN_MODE)
 	{
 		fprintf(stderr, "\nNET_TRAIN_MODE\n\n");
 
 		neuralnet_t* nn;
-		int layer_size = dataset->X->n;
 
 		// Build neuralnet_t* --------------------------------------
 		if (use_net == 0)
@@ -97,11 +85,8 @@ int main (int argc, char** argv)
 			int topology[num_layers];
 			for (i = 0; i < num_layers; i++)
             {
-				topology[i] = i == num_layers-1 ? 2 : layer_size;
+				topology[i] = i == num_layers-1 ? 2 : dataset->X->n;
             }
-            // topology[1] = 512;
-            // topology[2] = 256;
-            // topology[3] = 128;
 
 			nn = nn_new(topology, num_layers);
 		}
@@ -110,21 +95,13 @@ int main (int argc, char** argv)
 			nn = nn_import(net_file);
 		}
 
-		// Print topology
-		fprintf(stderr, "\nnlayers : %d\ntopology: _", nn->nlayers);
-		for (i = 0; i < nn->nlayers; i++)
-			fprintf(stderr, "%d_", nn->topology[i]);
-		fprintf(stderr, "\n\n");
+		print_topology(nn);
 		//-----------------------------------------------------------
 
 		// Run backpropagation
 		// --------------------
-		// nn_backpropagation(
-        //     nn, dataset->X, dataset->Y, iterations, learning_rate
-        // );
-
         dat_shuffle(dataset);
-        nn_backpropagation_sgd(
+        nn_backpropagation_sgd (
             nn, dataset, iterations, learning_rate
         );
 
@@ -140,21 +117,53 @@ int main (int argc, char** argv)
 		// Build neural_net_t*
 		neuralnet_t* nn = nn_import(net_file);
 
-		// Print topology
-		fprintf(stderr, "\nnlayers : %d\ntopology: _", nn->nlayers);
-		for (i = 0; i < nn->nlayers; i++)
-			fprintf(stderr, "%d_", nn->topology[i]);
-		fprintf(stderr, "\n\n");
+		print_topology(nn);
 
 		// Feed data forward
 		vec_t* output = nn_feed_forward(nn, dataset->X);
 
         // Print estimations
-		for (i = 0; i < output->m; i++) {
-			printf("%g %g", vec_get(output,i,0), vec_get(output,i,1));
-			printf("\n");
+		for (i = 0; i < output->m; i++) 
+        {
+			printf("%g %g\n", vec_get(output,i,0), vec_get(output,i,1));
 		}
 	}
+	//-------------------------------------------------------------------------
+
+    //-------------------------------------------------------------------------
+	// Testing neural_net.h
+	//-------------------------------------------------------------------------
+    else if (mode == AE_TRAIN_MODE)
+    {
+        fprintf(stderr, "\nAE_TRAIN_MODE\n\n");
+
+        neuralnet_t* ae;
+
+        if (use_net == 0)
+		{
+            ae = ae_new(dataset->X->n);
+        }
+        else
+        {
+            ae = nn_import(net_file);
+        }
+
+        print_topology(ae);
+
+        // Prepare data
+        vec_free(&dataset->Y);
+        dataset->Y = vec_clone(dataset->X);
+
+        // Train
+        dat_shuffle(dataset);
+        nn_backpropagation_sgd (
+            ae, dataset, iterations, learning_rate
+        );
+
+		// Export nn and free memory
+		nn_export(ae, net_file);
+		nn_free(&ae);
+    }
 	//-------------------------------------------------------------------------
 
 
