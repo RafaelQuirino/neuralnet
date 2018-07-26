@@ -144,8 +144,9 @@ neuralnet_t* nn_import (const char* fname);
 void nn_initialize_weights (neuralnet_t* nn);
 
 // Configuring neuralnet's mechanism parameters
-void nn_set_cost_function    (neuralnet_t* nn, int cost_func_code);
-void nn_set_layer_activation (neuralnet_t* nn, int layeridx, int act_func_code);
+void nn_set_cost_function     (neuralnet_t* nn, int cost_func_code);
+void nn_set_layer_activation  (neuralnet_t* nn, int layeridx, int act_func_code);
+void nn_set_output_activation (neuralnet_t* nn, int act_func_code);
 
 // Main interface
 void nn_train (neuralnet_t* nn, dataset_t* data);

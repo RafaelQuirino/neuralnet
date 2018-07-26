@@ -577,21 +577,87 @@ void nn_initialize_weights (neuralnet_t* nn)
 
 void nn_set_cost_function (neuralnet_t* nn, int cost_func_code)
 {
+	int line = __LINE__ - 2;
+	int func = cost_func_code;
+	int lim1 = NN_HINGE_LOSS;
+	int lim2 = NN_CATEGORICAL_CROSS_ENTROPY;
+	if (nn == NULL)
+	{
+		ut_errmsg (
+			"neuralnet_t pointer is NULL.",
+			__FILE__, line, 1
+		);
+	}
+	if (!(func >= lim1 && func <= lim2))
+	{
+		ut_errmsg (
+			"Invalid activation function code.",
+			__FILE__, line, 1
+		);
+	}
 
-}
-
-
-
-void nn_set_output_function (neuralnet_t* nn, int output_func_code)
-{
-
+	nn->cost_function = cost_func_code;
 }
 
 
 
 void nn_set_layer_activation (neuralnet_t* nn, int layeridx, int act_func_code)
 {
+	int line = __LINE__ - 2;
+	int func = act_func_code;
+	int lim1 = NN_IDENTITY_ACTIVATION;
+	int lim2 = NN_HYPERBOLIC_TANGENT_ACTIVATION;
+	if (nn == NULL)
+	{
+		ut_errmsg (
+			"neuralnet_t pointer is NULL.",
+			__FILE__, line, 1
+		);
+	}
+	if (!(func >= lim1 && func <= lim2))
+	{
+		ut_errmsg (
+			"Invalid activation function code.",
+			__FILE__, line, 1
+		);
+	}
+	if (layeridx < 0 || layeridx >= nn->nlayers-1)
+	{
+		ut_errmsg (
+			"Invalid layer index.",
+			__FILE__, line, 1
+		);
+	}
 
+	nn->activations[layeridx] = act_func_code;
+}
+
+
+
+void nn_set_output_activation (neuralnet_t* nn, int act_func_code)
+{
+	int line = __LINE__ - 2;
+	int func = act_func_code;
+	int lim1 = NN_IDENTITY_ACTIVATION;
+	int lim2 = NN_HYPERBOLIC_TANGENT_ACTIVATION;
+	if (nn == NULL)
+	{
+		ut_errmsg (
+			"neuralnet_t pointer is NULL.",
+			__FILE__, line, 1
+		);
+	}
+	if (!(func >= lim1 && func <= lim2))
+	{
+		ut_errmsg (
+			"Invalid activation function code.",
+			__FILE__, line, 1
+		);
+	}
+
+	int tsize = nn->nlayers;
+	nn->output_activation = act_func_code;
+	nn->activations[(tsize-1)-1] = nn->output_activation;
 }
 
 
