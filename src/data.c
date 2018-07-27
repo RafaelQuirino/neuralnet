@@ -23,7 +23,7 @@ dataset_t* dat_new ()
 
     // Some default values
     data->size               = 0;
-    data->batch_size         = 128;
+    data->batch_size         = 512;//128;
     data->row_offset         = 0;
     data->current_batch      = 0;
     data->current_epoch      = 0;
@@ -59,6 +59,24 @@ dataset_t* dat_import (const char* fname)
 
 
 
+unsigned long dat_get_mem (dataset_t* data)
+{
+    if (data == NULL)
+    {
+        return 0;
+    }
+
+    unsigned long mem;
+    
+    mem = 8 * sizeof(int);
+    mem += vec_get_mem(data->X);
+    mem += vec_get_mem(data->Y);
+
+    return mem;
+}
+
+
+
 void dat_normalize (dataset_t* data)
 {
     int i, j;
@@ -90,6 +108,32 @@ void dat_normalize (dataset_t* data)
             vec_type_t sigma = vec_get(variance, 0, j);
             elem /= sigma;
             vec_set(data->X, i,j, elem);
+        }
+    }
+}
+
+
+
+void dat_add_noise (vec_t* data)
+{
+    int i, j;
+    srand(time(NULL));
+
+    for (i = 0; i < data->m; i++)
+    {
+        for (j = 0; j < data->n; j++)
+        {
+            int randint = rand() % 11;
+            int condition = randint <= 1;
+
+            if (condition)
+            {
+                vec_type_t elem  = vec_get(data,i,j);
+                vec_type_t noise = (vec_type_t) ut_gaussian_rand();
+                noise /= 10;
+                noise = fmax(0,elem+noise);
+                vec_set(data,i,j, noise);
+            }
         }
     }
 }
@@ -320,6 +364,10 @@ vec_type_t** dat_get_lines_representation_1 (
         for (j = 0; j < max_chars; j++)
         {
             vec_type_t val = 0;
+
+            if (lines[i][j] == '#')
+                lines[i][j] = 0;
+            
             if (j < len)
                 val = ((vec_type_t) lines[i][j]) / NORM_UCHAR;
             vecs[i][j] = val;
@@ -396,3 +444,5 @@ void dat_print_vec_lines (vec_t* data)
         printf("\n");
     }
 }
+
+

@@ -62,12 +62,14 @@ typedef struct
 
 
 // Abstract data interface ----------------------------------------------------
-dataset_t* dat_new    ();
-void       dat_free   (dataset_t** data);
-void       dat_export (dataset_t* data, const char* fname);
-dataset_t* dat_import (const char* fname);
+dataset_t*    dat_new     ();
+void          dat_free    (dataset_t** data);
+void          dat_export  (dataset_t* data, const char* fname);
+dataset_t*    dat_import  (const char* fname);
+unsigned long dat_get_mem (dataset_t* data);
 
 void dat_normalize (dataset_t* data);
+void dat_add_noise (vec_t* data);
 
 dataset_t* dat_import_array (
     vec_type_t** features_arr, vec_type_t** labels_arr,
