@@ -114,6 +114,7 @@ void ut_errmsg (const char* msg, const char* file, int line, int stop)
 {
     fprintf(stderr, "Error at %s:%d. ", file, line);
     fprintf(stderr, "%s\n", msg);
+    fflush(stderr);
 
     if (stop)
     {
