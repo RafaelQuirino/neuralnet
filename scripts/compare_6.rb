@@ -64,48 +64,44 @@ arr1.each_with_index do |item, index|
 		acertou += 1
 
 	else
-		# if arr2[index] == 0 and arr1[index][0] >= threshold and !condition
-		# 	acertou += 1
-		# else
 			
-			errou += 1
+		errou += 1
 
-			if (arr2[index] == 1)
-				fn += 1
-				if (printfn == "true")
-					line = `sed -n #{index+1}p #{file3}`
-					puts "#{index+1} -> #{arr2[index]}, [#{arr1[index][0]},#{arr1[index][1]}]"
-					begin
-						puts "[#{line.gsub("\n","")[0..159]}]"
-						puts "[#{line.gsub("\n","")[160..319]}]"
-						puts "[#{line.gsub("\n","")[320..479]}]"
-						puts "[#{line.gsub("\n","")[480..639]}]".green.bold
-						puts "[#{line.gsub("\n","")[640..799]}]"
-						puts "[#{line.gsub("\n","")[800..959]}]"
-						puts "[#{line.gsub("\n","")[960...1120]}]\n\n"
-						rescue 
-					end
-				end
-			else
-				fp += 1
-				fparr << (index + 1)
-
-				if (printfp == "true")
-					line = `sed -n #{index+1}p #{file3}`
-					puts "#{index+1} -> #{arr2[index]}, [#{arr1[index][0]},#{arr1[index][1]}]"
-					begin
-						puts "[#{line.gsub("\n","")[0..159]}]"
-						puts "[#{line.gsub("\n","")[160..319]}]"
-						puts "[#{line.gsub("\n","")[320..479]}]"
-						puts "[#{line.gsub("\n","")[480..639]}]".green.bold
-						puts "[#{line.gsub("\n","")[640..799]}]"
-						puts "[#{line.gsub("\n","")[800..959]}]"
-						puts "[#{line.gsub("\n","")[960...1120]}]\n\n"
-						rescue
-					end
+		if (arr2[index] == 1)
+			fn += 1
+			if (printfn == "true")
+				line = `sed -n #{index+1}p #{file3}`
+				puts "#{index+1} -> #{arr2[index]}, [#{arr1[index][0]},#{arr1[index][1]}]"
+				begin
+					puts "[#{line.gsub("\n","")[0..159]}]"
+					puts "[#{line.gsub("\n","")[160..319]}]"
+					puts "[#{line.gsub("\n","")[320..479]}]"
+					puts "[#{line.gsub("\n","")[480..639]}]".green.bold
+					puts "[#{line.gsub("\n","")[640..799]}]"
+					puts "[#{line.gsub("\n","")[800..959]}]"
+					puts "[#{line.gsub("\n","")[960...1120]}]\n\n"
+					rescue 
 				end
 			end
-		# end
+		else
+			fp += 1
+			fparr << (index + 1)
+
+			if (printfp == "true")
+				line = `sed -n #{index+1}p #{file3}`
+				puts "#{index+1} -> #{arr2[index]}, [#{arr1[index][0]},#{arr1[index][1]}]"
+				begin
+					puts "[#{line.gsub("\n","")[0..159]}]"
+					puts "[#{line.gsub("\n","")[160..319]}]"
+					puts "[#{line.gsub("\n","")[320..479]}]"
+					puts "[#{line.gsub("\n","")[480..639]}]".green.bold
+					puts "[#{line.gsub("\n","")[640..799]}]"
+					puts "[#{line.gsub("\n","")[800..959]}]"
+					puts "[#{line.gsub("\n","")[960...1120]}]\n\n"
+					rescue
+				end
+			end
+		end
 	end
 end
 
