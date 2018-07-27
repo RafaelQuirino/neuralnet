@@ -552,6 +552,53 @@ neuralnet_t* nn_import (const char* fname)
 
 
 
+unsigned long nn_get_mem (neuralnet_t* nn)
+{
+	if (nn == NULL)
+    {
+        return 0;
+    }
+
+	int i;
+	unsigned long mem;
+
+	// Config params
+	mem = 5 * sizeof(int) + 4 * sizeof(float);
+
+	// Topology and activations
+	mem += nn->nlayers * sizeof(int) + (nn->nlayers-1) * sizeof(int);
+
+	// Weights and biases
+	mem += 2 * (nn->nlayers-1) * sizeof(vec_t*);
+	for (i = 0; i < nn->nlayers-1; i++)
+	{
+		mem += vec_get_mem(nn->W[i]);
+		mem += vec_get_mem(nn->B[i]);
+	}
+
+	// VdW, VdB, SdW, SdB
+	mem += 4 * (nn->nlayers-1) * sizeof(vec_t*);
+	for (i = 0; i < nn->nlayers-1; i++)
+	{
+		mem += vec_get_mem(nn->VdW[i]);
+		mem += vec_get_mem(nn->VdB[i]);
+		mem += vec_get_mem(nn->SdW[i]);
+		mem += vec_get_mem(nn->SdB[i]);
+	}
+
+	// Z and A
+	mem += 2 * (nn->nlayers-1) * sizeof(vec_t*);
+	for (i = 0; i < nn->nlayers-1; i++)
+	{
+		mem += vec_get_mem(nn->Z[i]);
+		mem += vec_get_mem(nn->A[i]);
+	}
+
+	return mem;
+}
+
+
+
 void nn_initialize_weights (neuralnet_t* nn)
 {
 	int i, j, k;
@@ -630,6 +677,17 @@ void nn_set_layer_activation (neuralnet_t* nn, int layeridx, int act_func_code)
 	}
 
 	nn->activations[layeridx] = act_func_code;
+}
+
+
+
+void nn_set_layers_activation (neuralnet_t* nn, int act_func_code)
+{
+	int i;
+	for (i = 0; i < nn->nlayers-1; i++)
+	{
+		nn_set_layer_activation(nn,i,act_func_code);
+	}
 }
 
 
@@ -1106,8 +1164,7 @@ void nn_backpropagation (
 void nn_backpropagation_sgd (
 	neuralnet_t* nn,
 	dataset_t* dataset, 
-	int num_iterations,
-	vec_type_t learning_rate
+	int num_iterations
 )
 {
 	// Variables
@@ -1117,8 +1174,8 @@ void nn_backpropagation_sgd (
 	double costmean = 0.0;
 
 	// Parameters
-	double momentum = nn->momentum_rate;
-	learning_rate   = nn->learning_rate; //overwriting...
+	double momentum        = nn->momentum_rate;
+	double learning_rate   = nn->learning_rate;
 
 	// For each iteration of backpropagation
 	for (i = 0; i < num_iterations; i++) 
@@ -1154,6 +1211,7 @@ void nn_backpropagation_sgd (
 
 		} // for (j = 0; j < nn->nlayers-1; j++)
 	}
+
 	printf("\n");
 }
 

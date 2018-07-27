@@ -136,16 +136,18 @@ typedef struct
 
 
 // Common "CRUD" functions
-neuralnet_t* nn_new    (int topology[], int tsize);
-void         nn_free   (neuralnet_t** nn);
-void         nn_export (neuralnet_t* nn, const char* fname);
-neuralnet_t* nn_import (const char* fname);
+neuralnet_t*  nn_new     (int topology[], int tsize);
+void          nn_free    (neuralnet_t** nn);
+void          nn_export  (neuralnet_t* nn, const char* fname);
+neuralnet_t*  nn_import  (const char* fname);
+unsigned long nn_get_mem (neuralnet_t* nn);
 
 void nn_initialize_weights (neuralnet_t* nn);
 
 // Configuring neuralnet's mechanism parameters
 void nn_set_cost_function     (neuralnet_t* nn, int cost_func_code);
 void nn_set_layer_activation  (neuralnet_t* nn, int layeridx, int act_func_code);
+void nn_set_layers_activation (neuralnet_t* nn, int act_func_code);
 void nn_set_output_activation (neuralnet_t* nn, int act_func_code);
 
 // Main interface
@@ -187,8 +189,7 @@ void nn_backpropagation (
 void nn_backpropagation_sgd (
 	neuralnet_t* nn, 
     dataset_t* dataset, 
-	int num_iterations,
-	vec_type_t learning_rate
+	int num_iterations
 );
 
 // Memory efficient version.
