@@ -53,13 +53,14 @@ typedef struct
 //=============================================================================
 // COMMON, MAINTAINANCE, USEFUL FUNCTIONS
 //=============================================================================
-vec_t*       vec_new     (int m, int n);
-vec_t*       vec_new_arr (vec_type_t** arr, int m, int n);
-vec_type_t** vec_to_arr  (vec_t* vec);
-void         vec_free    (vec_t** vecptr);
-vec_type_t   vec_get     (vec_t* vec, int i, int j);
-void         vec_set     (vec_t* vec, int i, int j, vec_type_t k);
-void         vec_set_all (vec_t* vec, vec_type_t k);
+vec_t*        vec_new     (int m, int n);
+vec_t*        vec_new_arr (vec_type_t** arr, int m, int n);
+vec_type_t**  vec_to_arr  (vec_t* vec);
+void          vec_free    (vec_t** vecptr);
+vec_type_t    vec_get     (vec_t* vec, int i, int j);
+void          vec_set     (vec_t* vec, int i, int j, vec_type_t k);
+void          vec_set_all (vec_t* vec, vec_type_t k);
+unsigned long vec_get_mem (vec_t* vec);
 
 // For use with functions that generate some value like random numbers
 void vec_set_all_func (vec_t* vec, double(*funcptr)());

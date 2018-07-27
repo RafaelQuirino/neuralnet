@@ -203,6 +203,23 @@ void vec_set_all_func (vec_t* vec, double(*funcptr)())
             vec_set(vec, i, j, (vec_type_t) funcptr());
 }
 
+unsigned long vec_get_mem (vec_t* vec)
+{
+    if (vec == NULL)
+    {
+        return 0;
+    }
+
+    unsigned long mem;
+    
+    mem = 6 * sizeof(int);
+    mem += vec->size * sizeof(vec_type_t);
+
+    return mem;
+}
+
+
+
 //TODO
 void vec_get_row (vec_t* vec, int row)
 {
@@ -274,14 +291,34 @@ void vec_pop_column (vec_t* vec, vec_type_t* arr)
 
 void vec_swap_rows (vec_t* vec, int i1, int i2)
 {
-    int j;
+    // int j;
+    // for (j = 0; j < vec->n; j++)
+    // {
+    //     vec_type_t tmp1 = vec_get(vec, i1,j);
+    //     vec_type_t tmp2 = vec_get(vec, i2,j);
+    //     vec_set(vec, i1,j, tmp2);
+    //     vec_set(vec, i2,j, tmp1);
+    // }
 
-    for (j = 0; j < vec->n; j++)
+    int N     =  vec->n,
+        incX  =  1,
+        incY  =  1;
+
+    if (VEC_TYPE == VEC_FLOAT)
     {
-        vec_type_t tmp1 = vec_get(vec, i1,j);
-        vec_type_t tmp2 = vec_get(vec, i2,j);
-        vec_set(vec, i1,j, tmp2);
-        vec_set(vec, i2,j, tmp1);
+        cblas_sswap (
+            N,
+            (float*) &(vec->vec[i1*vec->n]), incX,
+            (float*) &(vec->vec[i2*vec->n]), incY 
+        );
+    }
+    else if (VEC_TYPE == VEC_DOUBLE)
+    {
+        cblas_dswap (
+            N,
+            (double*) &(vec->vec[i1*vec->n]), incX,
+            (double*) &(vec->vec[i2*vec->n]), incY 
+        );
     }
 }
 
@@ -307,14 +344,38 @@ void vec_copy (vec_t* dest, vec_t* src)
         );
     }
 
-    int i, j;
+    // int i, j;
+    // for (i = 0; i < dest->m; i++) 
+    // {
+    //     for (j = 0; j < dest->n; j++) 
+    //     {
+    //         vec_type_t elem = vec_get(src, i, j);
+    //         vec_set(dest, i, j, elem);
+    //     }
+    // }
 
-    for (i = 0; i < dest->m; i++) 
+    int N     =  src->n,
+        incX  =  1,
+        incY  =  1;
+    int row;
+
+    for (row = 0; row < src->m; row++)
     {
-        for (j = 0; j < dest->n; j++) 
+        if (VEC_TYPE == VEC_FLOAT)
         {
-            vec_type_t elem = vec_get(src, i, j);
-            vec_set(dest, i, j, elem);
+            cblas_scopy (
+                N,
+                (float*) &(src->vec[row*src->n]), incX,
+                (float*) &(dest->vec[row*dest->n]), incY 
+            );
+        }
+        else if (VEC_TYPE == VEC_DOUBLE)
+        {
+            cblas_dcopy (
+                N,
+                (double*) &(src->vec[row*src->n]), incX,
+                (double*) &(dest->vec[row*dest->n]), incY 
+            );
         }
     }
 }
@@ -348,7 +409,6 @@ void vec_copy_portion (vec_t* dest, vec_t* src, int offset, int size)
     }
 
     int i, j;
-
     for (i = offset; i < offset+size; i++) 
     {
         for (j = 0; j < src->n; j++) 
@@ -370,18 +430,20 @@ vec_t* vec_clone (vec_t* src)
         );
     }
 
-    int i, j;
 
     vec_t* dest = vec_new(src->m, src->n);
 
-    for (i = 0; i < dest->m; i++) 
-    {
-        for (j = 0; j < dest->n; j++) 
-        {
-            vec_type_t elem = vec_get(src, i, j);
-            vec_set(dest, i, j, elem);
-        }
-    }
+    // int i, j;
+    // for (i = 0; i < dest->m; i++) 
+    // {
+    //     for (j = 0; j < dest->n; j++) 
+    //     {
+    //         vec_type_t elem = vec_get(src, i, j);
+    //         vec_set(dest, i, j, elem);
+    //     }
+    // }
+
+    vec_copy(dest,src);
 
     return dest;
 }
@@ -702,9 +764,9 @@ vec_type_t vec_inner_sum (vec_t* A)
         );
     }
 
-    int i, j;
     vec_type_t sum = 0;
     
+    int i, j;
     for (i = 0; i < A->m; i++) 
     {
         for (j = 0; j < A->n; j++) 
@@ -879,10 +941,36 @@ void vec_mult_scalar (vec_t* A, vec_type_t scalar)
         );
     }
     
-    int i, j;
-    for (i = 0; i < A->m; i++) 
-        for (j = 0; j < A->n; j++) 
-            vec_set(A,i,j, vec_get(A,i,j) * scalar);
+    // int i, j;
+    // for (i = 0; i < A->m; i++) 
+    //     for (j = 0; j < A->n; j++) 
+    //         vec_set(A,i,j, vec_get(A,i,j) * scalar);
+
+    int N     = A->n,
+        incX  = 1;
+    int row;
+
+    for (row = 0; row < A->m; row++)
+    {
+        if (VEC_TYPE == VEC_FLOAT)
+        {
+            cblas_sscal (
+                N,
+                (float) scalar,
+                (float*) &(A->vec[row*A->n]), 
+                incX
+            );
+        }
+        else if (VEC_TYPE == VEC_DOUBLE)
+        {
+            cblas_dscal (
+                N,
+                (double) scalar,
+                (double*) &(A->vec[row*A->n]), 
+                incX
+            );
+        }
+    }
 }
 
 vec_t* vec_get_scalar_prod (vec_t* A, vec_type_t scalar)
@@ -896,12 +984,15 @@ vec_t* vec_get_scalar_prod (vec_t* A, vec_type_t scalar)
         );
     }
     
-    int i, j;
     vec_t* newvec = vec_new(A->m,A->n);
 
-    for (i = 0; i < A->m; i++) 
-        for (j = 0; j < A->n; j++) 
-            vec_set(newvec,i,j, vec_get(A,i,j) * scalar);
+    // int i, j;
+    // for (i = 0; i < A->m; i++) 
+    //     for (j = 0; j < A->n; j++) 
+    //         vec_set(newvec,i,j, vec_get(A,i,j) * scalar);
+
+    vec_copy(newvec,A);
+    vec_mult_scalar(newvec,scalar);
 
     return newvec;
 }
@@ -1222,11 +1313,40 @@ void vec_add (vec_t* A, vec_t* B, vec_t* AplusB)
         );
     }
 
-    int i, j;
+    // int i, j;
+    // for (i = 0; i < A->m; i++) 
+    //     for (j = 0; j < A->n; j++) 
+    //         vec_set(AplusB,i,j, vec_get(A,i,j) + vec_get(B,i,j));
 
-    for (i = 0; i < A->m; i++) 
-        for (j = 0; j < A->n; j++) 
-            vec_set(AplusB,i,j, vec_get(A,i,j) + vec_get(B,i,j));
+    int N     = A->n,
+        incX  = 1,
+        incY  = 1;
+    int alpha = 1;
+    int row;
+
+    vec_copy(AplusB,A);
+
+    for (row = 0; row < A->m; row++)
+    {
+        if (VEC_TYPE == VEC_FLOAT)
+        {
+            cblas_saxpy (
+                N,
+                (float) alpha,
+                (float*) &(B->vec[row*B->n]), incX,
+                (float*) &(AplusB->vec[row*AplusB->n]), incY 
+            );
+        }
+        else if (VEC_TYPE == VEC_DOUBLE)
+        {
+            cblas_daxpy (
+                N,
+                (double) alpha,
+                (double*) &(B->vec[row*B->n]), incX,
+                (double*) &(AplusB->vec[row*AplusB->n]), incY 
+            );
+        }
+    }
 }
 
 vec_t* vec_get_sum (vec_t* A, vec_t* B)
@@ -1249,13 +1369,42 @@ vec_t* vec_get_sum (vec_t* A, vec_t* B)
         );
     }
 
-    int i, j;
-
     vec_t* AplusB = vec_new(A->m,A->n);
 
-    for (i = 0; i < A->m; i++) 
-        for (j = 0; j < A->n; j++) 
-            vec_set(AplusB,i,j, vec_get(A,i,j) + vec_get(B,i,j));
+    // int i, j;
+    // for (i = 0; i < A->m; i++) 
+    //     for (j = 0; j < A->n; j++) 
+    //         vec_set(AplusB,i,j, vec_get(A,i,j) + vec_get(B,i,j));
+
+    int N     = A->n,
+        incX  = 1,
+        incY  = 1;
+    int alpha = 1;
+    int row;
+
+    vec_copy(AplusB,A);
+
+    for (row = 0; row < A->m; row++)
+    {
+        if (VEC_TYPE == VEC_FLOAT)
+        {
+            cblas_saxpy (
+                N,
+                (float) alpha,
+                (float*) &(B->vec[row*B->n]), incX,
+                (float*) &(AplusB->vec[row*AplusB->n]), incY 
+            );
+        }
+        else if (VEC_TYPE == VEC_DOUBLE)
+        {
+            cblas_daxpy (
+                N,
+                (double) alpha,
+                (double*) &(B->vec[row*B->n]), incX,
+                (double*) &(AplusB->vec[row*AplusB->n]), incY 
+            );
+        }
+    }
 
     return AplusB;
 }
@@ -1280,11 +1429,40 @@ void vec_sub (vec_t* A, vec_t* B, vec_t* AminusB)
         );
     }
 
-    int i, j;
+    // int i, j;
+    // for (i = 0; i < A->m; i++) 
+    //     for (j = 0; j < A->n; j++) 
+    //         vec_set(AminusB,i,j, vec_get(A,i,j) - vec_get(B,i,j));
 
-    for (i = 0; i < A->m; i++) 
-        for (j = 0; j < A->n; j++) 
-            vec_set(AminusB,i,j, vec_get(A,i,j) - vec_get(B,i,j));
+    int N     =  A->n,
+        incX  =  1,
+        incY  =  1;
+    int alpha = -1;
+    int row;
+
+    vec_copy(AminusB,A);
+
+    for (row = 0; row < A->m; row++)
+    {
+        if (VEC_TYPE == VEC_FLOAT)
+        {
+            cblas_saxpy (
+                N,
+                (float) alpha,
+                (float*) &(B->vec[row*B->n]), incX,
+                (float*) &(AminusB->vec[row*AminusB->n]), incY 
+            );
+        }
+        else if (VEC_TYPE == VEC_DOUBLE)
+        {
+            cblas_daxpy (
+                N,
+                (double) alpha,
+                (double*) &(B->vec[row*B->n]), incX,
+                (double*) &(AminusB->vec[row*AminusB->n]), incY 
+            );
+        }
+    }
 }
 
 vec_t* vec_get_diff (vec_t* A, vec_t* B)
@@ -1307,13 +1485,43 @@ vec_t* vec_get_diff (vec_t* A, vec_t* B)
         );
     }
 
-    int i, j;
 
     vec_t* AminusB = vec_new(A->m,A->n);
 
-    for (i = 0; i < A->m; i++) 
-        for (j = 0; j < A->n; j++) 
-            vec_set(AminusB,i,j, vec_get(A,i,j) - vec_get(B,i,j));
+    int i, j;
+    // for (i = 0; i < A->m; i++) 
+    //     for (j = 0; j < A->n; j++) 
+    //         vec_set(AminusB,i,j, vec_get(A,i,j) - vec_get(B,i,j));
+    
+    int N     =  A->n,
+        incX  =  1,
+        incY  =  1;
+    int alpha = -1;
+    int row;
+
+    vec_copy(AminusB,A);
+
+    for (row = 0; row < A->m; row++)
+    {
+        if (VEC_TYPE == VEC_FLOAT)
+        {
+            cblas_saxpy (
+                N,
+                (float) alpha,
+                (float*) &(B->vec[row*B->n]), incX,
+                (float*) &(AminusB->vec[row*AminusB->n]), incY 
+            );
+        }
+        else if (VEC_TYPE == VEC_DOUBLE)
+        {
+            cblas_daxpy (
+                N,
+                (double) alpha,
+                (double*) &(B->vec[row*B->n]), incX,
+                (double*) &(AminusB->vec[row*AminusB->n]), incY 
+            );
+        }
+    }
 
     return AminusB;
 }
@@ -1462,10 +1670,33 @@ void vec_sum_row (vec_t* A, int row, vec_type_t* arr)
         );
     }
 
-    int j;
+    // int j;
+    // for (j = 0; j < A->n; j++)
+    //     vec_set(A,row,j, vec_get(A,row,j) + arr[j]);
 
-    for (j = 0; j < A->n; j++)
-        vec_set(A,row,j, vec_get(A,row,j) + arr[j]);
+    int N     = A->n,
+        incX  = 1,
+        incY  = 1;
+    int alpha = 1;
+
+    if (VEC_TYPE == VEC_FLOAT)
+    {
+        cblas_saxpy (
+            N,
+            (float) alpha,
+            (float*) arr, incX,
+            (float*) &(A->vec[row*A->n]), incY 
+        );
+    }
+    else if (VEC_TYPE == VEC_DOUBLE)
+    {
+        cblas_daxpy (
+            N,
+            (double) alpha,
+            (double*) arr, incX,
+            (double*) &(A->vec[row*A->n]), incY 
+        );
+    }
 }
 
 
