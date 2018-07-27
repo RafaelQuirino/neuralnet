@@ -4,8 +4,10 @@ autoencoder_t* ae_new (int input_size)
 {
     autoencoder_t* ae;
 
-    int topology[3] = {input_size,input_size/2,input_size};
-    ae = nn_new(topology,3);
+    int x = input_size;
+    int topology[5] = {x, x*(3.0/4.0), x/2, x*(3.0/4.0), x};
+    ae = nn_new(topology,5);
+
     nn_set_layer_activation(ae, 0, NN_SIGMOID_ACTIVATION);
     nn_set_layer_activation(ae, 1, NN_SIGMOID_ACTIVATION);
     nn_set_output_activation(ae, NN_SIGMOID_ACTIVATION);
@@ -19,6 +21,61 @@ autoencoder_t* ae_new (int input_size)
 void ae_free (autoencoder_t** ae)
 {
     nn_free(ae);
+}
+
+
+
+void ae_add_layer    (autoencoder_t* ae, int lsize)
+{
+
+}
+
+
+
+void ae_remove_layer (autoencoder_t* ae, int lsize)
+{
+
+}
+
+
+
+vec_t* ae_encode (autoencoder_t* ae, vec_t* vecs)
+{
+    int i, j;
+    int encoder_size = (ae->nlayers/2)+1;
+
+    int topology[encoder_size];
+    for (i = 0; i < encoder_size; i++)
+    {
+        topology[i] = ae->topology[i];
+    }
+
+    neuralnet_t* nn = nn_new(topology,encoder_size);
+    nn_set_layers_activation(nn, NN_SIGMOID_ACTIVATION);
+    nn_set_cost_function(nn, NN_SQUARE_ERROR);
+
+    for (i = 0; i < encoder_size-1; i++)
+    {
+        vec_copy(nn->W[i], ae->W[i]);
+        vec_copy(nn->B[i], ae->B[i]);
+    }
+    // Don't need this...
+    // nn->rms_rate            = ae->rms_rate;
+    // nn->momentum_rate       = ae->momentum_rate;
+    // nn->learning_rate       = ae->learning_rate;
+    // nn->regularization_rate = ae->regularization_rate;
+ 
+    vec_t* output = nn_feed_forward(nn,vecs);
+    nn_free(&nn);
+
+    return output;
+}
+
+
+
+vec_t* ae_decode (autoencoder_t* ae, vec_t* vecs)
+{
+    return NULL;
 }
 
 
