@@ -179,7 +179,7 @@ neuralnet_t* nn_new (int topology[], int tsize)
 	newnet->rms_rate            = 0.9;
 	newnet->momentum_rate       = 0.9;
 	newnet->learning_rate       = 0.001;
-	newnet->regularization_rate = 0.001;
+	newnet->regularization_rate = 0.5;
 
 	// Setting output layer's activation
 	//===================================
@@ -1163,6 +1163,7 @@ void nn_backpropagation (
 
 void nn_backpropagation_sgd (
 	neuralnet_t* nn,
+	const char* nnfile,
 	dataset_t* dataset, 
 	int num_iterations
 )
@@ -1176,6 +1177,7 @@ void nn_backpropagation_sgd (
 	// Parameters
 	double momentum        = nn->momentum_rate;
 	double learning_rate   = nn->learning_rate;
+	int current_epoch = 0;
 
 	// For each iteration of backpropagation
 	for (i = 0; i < num_iterations; i++) 
@@ -1210,6 +1212,12 @@ void nn_backpropagation_sgd (
 			vec_free(&dJdB[j]);
 
 		} // for (j = 0; j < nn->nlayers-1; j++)
+
+		if (dataset->current_epoch > current_epoch)
+		{
+			current_epoch = dataset->current_epoch;
+			nn_export(nn,nnfile);
+		}
 	}
 
 	printf("\n");

@@ -188,6 +188,7 @@ void nn_backpropagation (
 
 void nn_backpropagation_sgd (
 	neuralnet_t* nn, 
+    const char* nnfile,
     dataset_t* dataset, 
 	int num_iterations
 );
