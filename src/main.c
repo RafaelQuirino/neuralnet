@@ -34,6 +34,14 @@ void print_topology (neuralnet_t* nn)
     fprintf(stderr, "\n");
 }
 
+void print_config (neuralnet_t* nn)
+{
+    fprintf(stderr, "           rms rate : %g\n", nn->rms_rate);
+    fprintf(stderr, "      momentum rate : %g\n", nn->momentum_rate);
+    fprintf(stderr, "      learning rate : %g\n", nn->learning_rate);
+    fprintf(stderr, "regularization rate : %g\n", nn->regularization_rate);
+}
+
 
 
 int main (int argc, char** argv)
@@ -98,6 +106,7 @@ int main (int argc, char** argv)
 
         fprintf(stderr, "Loaded neural network.\n");
 		print_topology(nn);
+		print_config(nn);
         mem = nn_get_mem(nn);
         memtotal += mem;
         fprintf(stderr, "neural network memory: %g MB\n\n", (double)mem/(1024.0*1024.0));
@@ -107,14 +116,14 @@ int main (int argc, char** argv)
         fprintf(stderr, "Done.\n\n");
 
         nn_backpropagation_sgd (
-            nn, dataset, iterations
+            nn, net_file, dataset, iterations
         );
 
 		// Export nn and free memory
 		nn_export(nn, net_file);
 		nn_free(&nn);
 
-        fprintf(stderr, "total memory: %g MB\n\n", (double)memtotal/(1024.0*1024.0));
+        fprintf(stderr, "\ntotal memory: %g MB\n\n", (double)memtotal/(1024.0*1024.0));
 	}
 
 	else if (mode == NET_TEST_MODE)
@@ -125,6 +134,7 @@ int main (int argc, char** argv)
 		neuralnet_t* nn = nn_import(net_file);
         fprintf(stderr, "Loaded neural network.\n");
 		print_topology(nn);
+		print_config(nn);
         mem = nn_get_mem(nn);
         memtotal += mem;
         fprintf(stderr, "neural network memory: %g MB\n\n", (double)mem/(1024.0*1024.0));
@@ -162,6 +172,7 @@ int main (int argc, char** argv)
 
         fprintf(stderr, "Loaded autoencoder.\n");
         print_topology(ae);
+		print_config(ae);
         mem = nn_get_mem(ae);
         memtotal += mem;
         fprintf(stderr, "autoencoder memory: %g MB\n\n", (double)mem/(1024.0*1024.0));
@@ -181,7 +192,7 @@ int main (int argc, char** argv)
 
         // Train
         nn_backpropagation_sgd (
-            ae, dataset, iterations
+            ae, ae_file, dataset, iterations
         );
 
 		// Export nn and free memory
@@ -206,6 +217,7 @@ int main (int argc, char** argv)
         ae = nn_import(ae_file);
         fprintf(stderr, "Loaded autoencoder.\n");
         print_topology(ae);
+		print_config(ae);
         mem = nn_get_mem(ae);
         memtotal += mem;
         fprintf(stderr, "autoencoder memory: %g MB\n\n", (double)mem/(1024.0*1024.0));
@@ -238,6 +250,7 @@ int main (int argc, char** argv)
 		}
 
         print_topology(nn);
+		print_config(nn);
         mem = nn_get_mem(nn);
         memtotal += mem;
         fprintf(stderr, "neural network memory: %g MB\n\n", (double)mem/(1024.0*1024.0));
@@ -247,14 +260,14 @@ int main (int argc, char** argv)
         fprintf(stderr, "Done.\n\n");
 
         nn_backpropagation_sgd (
-            nn, dataset, iterations
+            nn, net_file, dataset, iterations
         );
 
 		// Export nn and free memory
 		nn_export(nn, net_file);
 		nn_free(&nn);
 
-        fprintf(stderr, "total memory: %g MB\n\n", (double)memtotal/(1024.0*1024.0));
+        fprintf(stderr, "\ntotal memory: %g MB\n\n", (double)memtotal/(1024.0*1024.0));
     }
 
     else if (mode == NET_AE_TEST_MODE)
@@ -267,6 +280,7 @@ int main (int argc, char** argv)
         ae = nn_import(ae_file);
         fprintf(stderr, "Loaded autoencoder.\n");
         print_topology(ae);
+		print_config(ae);
         mem = nn_get_mem(ae);
         memtotal += mem;
         fprintf(stderr, "autoencoder memory: %g MB\n\n", (double)mem/(1024.0*1024.0));
@@ -285,6 +299,7 @@ int main (int argc, char** argv)
 		nn = nn_import(net_file);
         fprintf(stderr, "Loaded neural network.\n");
 		print_topology(nn);
+		print_config(nn);
         mem = nn_get_mem(nn);
         memtotal += mem;
         fprintf(stderr, "neural network memory: %g MB\n\n", (double)mem/(1024.0*1024.0));
@@ -300,7 +315,7 @@ int main (int argc, char** argv)
 			printf("%g %g\n", vec_get(output,i,0), vec_get(output,i,1));
 		}
 
-        fprintf(stderr, "total memory: %g MB\n\n", (double)memtotal/(1024.0*1024.0));
+        fprintf(stderr, "\ntotal memory: %g MB\n\n", (double)memtotal/(1024.0*1024.0));
     }
 
 
