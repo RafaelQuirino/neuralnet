@@ -164,6 +164,9 @@ int main (int argc, char** argv)
         if (use_net == 0)
 		{
             ae = ae_new(dataset->X->n);
+
+            int topology[3] = {1120,840,1120};
+            ae = ae_new_top(topology,3);
         }
         else
         {
@@ -234,11 +237,13 @@ int main (int argc, char** argv)
 
 		if (use_net == 0)
 		{
-			int topology[num_layers];
-			for (i = 0; i < num_layers; i++)
-            {
-				topology[i] = i == num_layers-1 ? 2 : dataset->X->n;
-            }
+			// int topology[num_layers];
+			// for (i = 0; i < num_layers; i++)
+            // {
+			// 	topology[i] = i == num_layers-1 ? 2 : dataset->X->n;
+            // }
+
+            int topology[4] = {560,256,256,2};
 
 			nn = nn_new(topology, num_layers);
             fprintf(stderr, "Created new neural network.\n");
