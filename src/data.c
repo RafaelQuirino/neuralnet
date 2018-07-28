@@ -402,7 +402,7 @@ dataset_t* dat_get_dataset_from_representation_1 (
     if (num_lines != num_lines_2)
     if (abs(num_lines - num_lines_2) > 1) // Hardcoded solution. Needs fixing...
     {
-        ut_errmsg(
+        ut_errmsg (
             "Text and label files doesn't match.",
             __FILE__, line, 1
         );
