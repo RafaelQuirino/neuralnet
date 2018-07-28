@@ -18,6 +18,22 @@ autoencoder_t* ae_new (int input_size)
 
 
 
+autoencoder_t* ae_new_top (int* topology, int tsize)
+{
+    autoencoder_t* ae;
+
+    ae = nn_new(topology,tsize);
+
+    nn_set_layer_activation(ae, 0, NN_SIGMOID_ACTIVATION);
+    nn_set_layer_activation(ae, 1, NN_SIGMOID_ACTIVATION);
+    nn_set_output_activation(ae, NN_SIGMOID_ACTIVATION);
+    nn_set_cost_function(ae, NN_SQUARE_ERROR);
+
+    return ae;
+}
+
+
+
 void ae_free (autoencoder_t** ae)
 {
     nn_free(ae);
@@ -25,9 +41,22 @@ void ae_free (autoencoder_t** ae)
 
 
 
-void ae_add_layer    (autoencoder_t* ae, int lsize)
+void ae_add_layer (autoencoder_t* ae, int lsize)
 {
 
+}
+
+
+
+void ae_add_hidden_layer (autoencoder_t* ae, int lsize)
+{
+    int pos1 = ae->nlayers/2;
+    int pos2 = pos1 + 1;
+
+    vec_t* Wx = vec_new(ae->topology[pos1],lsize);
+    vec_t* Wy = vec_new(lsize,ae->topology[pos2]);
+
+    
 }
 
 
