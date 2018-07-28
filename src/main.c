@@ -243,7 +243,8 @@ int main (int argc, char** argv)
 			// 	topology[i] = i == num_layers-1 ? 2 : dataset->X->n;
             // }
 
-            int topology[4] = {560,256,256,2};
+            // int topology[4] = {560,256,256,2};
+            int topology[4] = {840,256,256,2};
 
 			nn = nn_new(topology, num_layers);
             fprintf(stderr, "Created new neural network.\n");

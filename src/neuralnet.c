@@ -790,6 +790,8 @@ vec_t* nn_forward (neuralnet_t* nn, vec_t* data)
 // (Just to get neural_net's output, not running backpropagation)
 vec_t* nn_feed_forward (neuralnet_t* nn, vec_t* data)
 {
+// fprintf(stderr,"nn_feed_forward\n");fflush(stderr);
+
 	int line = __LINE__ - 2;
 	if(data->n != nn->W[0]->m) 
 	{
@@ -820,6 +822,7 @@ vec_t* nn_feed_forward (neuralnet_t* nn, vec_t* data)
 	//-----------------------------------------------------
 	for (i = 0; i < nn->nlayers-1; i++) 
 	{
+// printf("<%d>\n", i);
 		// First, Z[i] = layerInput * nn->W[i]
 		nn->Z[i] = vec_get_dot (layerInput, nn->W[i]);
 		

@@ -1219,6 +1219,7 @@ vec_t* vec_get_dot (vec_t* A, vec_t* B)
 
     vec_t* AB = vec_new(A->m, B->n);
     vec_set_all(AB, 0.0);
+// fprintf(stderr, "after set all\n");fflush(stderr);
 
     // // Naive algorithm
     // //-----------------
@@ -1251,6 +1252,8 @@ vec_t* vec_get_dot (vec_t* A, vec_t* B)
 
     if (VEC_TYPE == VEC_FLOAT)
     {
+// fprintf(stderr, "vec float\n");fflush(stderr);
+
         cblas_sgemm ( // Specific for single precision
             CblasRowMajor, CblasNoTrans, CblasNoTrans,
             M, N, K,
@@ -1260,6 +1263,7 @@ vec_t* vec_get_dot (vec_t* A, vec_t* B)
             (float) beta,
             (float*) AB->vec, ldc 
         );
+// fprintf(stderr, "after cblas_sgemm\n");fflush(stderr);
     }
     else if (VEC_TYPE == VEC_DOUBLE)
     {
