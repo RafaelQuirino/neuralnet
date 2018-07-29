@@ -5,11 +5,16 @@ autoencoder_t* ae_new (int input_size)
     autoencoder_t* ae;
 
     int x = input_size;
+
+    // int topology[3] = {x, x*(3.0/4.0), x};
+    // ae = nn_new(topology,3);
+
     int topology[5] = {x, x*(3.0/4.0), x/2, x*(3.0/4.0), x};
     ae = nn_new(topology,5);
 
-    nn_set_layer_activation(ae, 0, NN_SIGMOID_ACTIVATION);
-    nn_set_layer_activation(ae, 1, NN_SIGMOID_ACTIVATION);
+    // nn_set_layer_activation(ae, 0, NN_SIGMOID_ACTIVATION);
+    // nn_set_layer_activation(ae, 1, NN_SIGMOID_ACTIVATION);
+    nn_set_layers_activation(ae, NN_SIGMOID_ACTIVATION);
     nn_set_output_activation(ae, NN_SIGMOID_ACTIVATION);
     nn_set_cost_function(ae, NN_SQUARE_ERROR);
 
@@ -109,14 +114,74 @@ vec_t* ae_decode (autoencoder_t* ae, vec_t* vecs)
 
 
 
-void ae_train (autoencoder_t* ae, dataset_t* dataset)
+void ae_train (
+    autoencoder_t* ae, 
+    const char* nnfile,
+    dataset_t* dataset,
+    int num_iterations
+)
 {
+    // Variables
+	int i, j;
+	vec_t **dJdW, **dJdB;
+	double costsum  = 0.0;
+	double costmean = 0.0;
+    neuralnet_t* nn = ae;
 
+	// Parameters
+	double momentum        = nn->momentum_rate;
+	double learning_rate   = nn->learning_rate;
+	int current_epoch = 0;
+
+	// For each iteration of backpropagation
+	for (i = 0; i < num_iterations; i++) 
+	{
+		minibatch_t* batch = dat_next_minibatch(dataset);
+
+		// Calculate gradients
+		double cost = nn_cost_func_prime(nn, batch->X, batch->Y, &dJdW, &dJdB);
+		costsum += cost;
+		costmean = costsum / (double) (i+1);
+
+		dat_free_minibatch(&batch);
+		
+		printf(
+			"\repoch: %4d, batch: %4d, iteration: %4d, cost: %5g, mean: %5g%s",
+			dataset->current_epoch, dataset->current_batch,
+			dataset->current_iteration, cost, costmean,
+			"     "
+		);
+		fflush(stdout);		
+
+		// For each layer in the neural net
+		for (j = 0; j < nn->nlayers-1; j++)
+		{
+			nn_optimization(
+				nn, dJdW[j], dJdB[j],
+				learning_rate, j, i, nn->optimization
+			);
+
+			//Freeing memory
+			vec_free(&dJdW[j]);
+			vec_free(&dJdB[j]);
+
+		} // for (j = 0; j < nn->nlayers-1; j++)
+
+		if (dataset->current_epoch > current_epoch)
+		{
+			current_epoch = dataset->current_epoch;
+			nn_export(nn,nnfile);
+            dat_add_noise(dataset->X);
+		}
+	}
+
+	printf("\n");
 }
 
 
 
 vec_t* ae_test (autoencoder_t* ae, dataset_t* dataset)
 {
+
     return NULL;
 }

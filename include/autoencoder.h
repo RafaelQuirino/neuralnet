@@ -22,7 +22,13 @@ void ae_add_layer        (autoencoder_t* ae, int lsize);
 void ae_hidden_add_layer (autoencoder_t* ae, int lsize);
 void ae_remove_layer     (autoencoder_t* ae, int lsize);
 
-void   ae_train (autoencoder_t* ae, dataset_t* dataset);
+// void   ae_train (autoencoder_t* ae, dataset_t* dataset);
+void ae_train (
+    autoencoder_t* ae, 
+    const char* nnfile,
+    dataset_t* dataset,
+    int num_iterations
+);
 vec_t* ae_test  (autoencoder_t* ae, dataset_t* dataset);
 
 vec_t* ae_encode (autoencoder_t* ae, vec_t* vecs);
