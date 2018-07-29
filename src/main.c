@@ -81,6 +81,8 @@ int main (int argc, char** argv)
     int i, j;
     int num_layers = 5;
     unsigned long mem, memaux, memtotal = 0;
+    float nnregrate = 0.1;
+    float aeregrate = 0.0001;
 
 
 
@@ -114,7 +116,7 @@ int main (int argc, char** argv)
 
         fprintf(stderr, "Loaded neural network.\n");
 		print_topology(nn);
-		print_config(nn);
+		// print_config(nn);
         mem = nn_get_mem(nn);
         memtotal += mem;
         fprintf(stderr, "neural network memory: %g MB\n\n", (double)mem/(1024.0*1024.0));
@@ -123,6 +125,8 @@ int main (int argc, char** argv)
         dat_shuffle(dataset);
         fprintf(stderr, "Done.\n\n");
 
+        nn->regularization_rate = nnregrate;
+		print_config(nn);
         nn_backpropagation_sgd (
             nn, net_file, dataset, iterations
         );
