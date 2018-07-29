@@ -19,10 +19,10 @@ vec_t* vec_new (int m, int n)
         );
     }
 
-    vec_t* vec = 0;
+    vec_t* vec = NULL;
     vec = (vec_t*) malloc (sizeof(vec_t));
     line = __LINE__ - 1;
-    if (!vec)
+    if (vec == NULL)
     {
         ut_errmsg (
             "Cannot allocate memory for the vec_t struct.",
@@ -30,10 +30,10 @@ vec_t* vec_new (int m, int n)
         );
     }
 
-    vec->vec = 0;
+    vec->vec = NULL;
     vec->vec = (vec_type_t*) malloc((m*n) * sizeof(vec_type_t));
     line = __LINE__ - 1;
-    if (!vec)
+    if (vec->vec == NULL)
     {
         ut_errmsg (
             "Cannot allocate memory for the vec_t array.",
@@ -584,9 +584,7 @@ void vec_print_portion (vec_t* vec, int portion, int side)
         for (i = m; i > 0; i--)
         {
             for (j = n; j > 0; j--)
-            {
                 printf("%.4f\t\t", vec_get(vec,vec->m-i,vec->n-j));
-            }
             printf("\n");
         }
     }
@@ -766,12 +764,41 @@ vec_type_t vec_inner_sum (vec_t* A)
 
     vec_type_t sum = 0;
     
-    int i, j;
-    for (i = 0; i < A->m; i++) 
+    // int i, j;
+    // for (i = 0; i < A->m; i++) 
+    // {
+    //     for (j = 0; j < A->n; j++) 
+    //     {
+    //         sum += vec_get(A, i, j);
+    //     }
+    // }
+
+    vec_t* vec_of_ones = vec_new(1,A->n);
+    vec_set_all(vec_of_ones, 1);
+
+    int N     = A->n,
+        incX  = 1,
+        incY  = 1;
+    int alpha = 1;
+    int row;
+
+    for (row = 0; row < A->m; row++)
     {
-        for (j = 0; j < A->n; j++) 
+        if (VEC_TYPE == VEC_FLOAT)
         {
-            sum += vec_get(A, i, j);
+            sum += cblas_sdot (
+                N,
+                (float*) vec_of_ones->vec, incX,
+                (float*) &(A->vec[row*A->n]), incY 
+            );
+        }
+        else if (VEC_TYPE == VEC_DOUBLE)
+        {
+            sum += cblas_ddot (
+                N,
+                (double*) vec_of_ones->vec, incX,
+                (double*) &(A->vec[row*A->n]), incY 
+            );
         }
     }
 
@@ -1219,7 +1246,6 @@ vec_t* vec_get_dot (vec_t* A, vec_t* B)
 
     vec_t* AB = vec_new(A->m, B->n);
     vec_set_all(AB, 0.0);
-// fprintf(stderr, "after set all\n");fflush(stderr);
 
     // // Naive algorithm
     // //-----------------
@@ -1252,8 +1278,6 @@ vec_t* vec_get_dot (vec_t* A, vec_t* B)
 
     if (VEC_TYPE == VEC_FLOAT)
     {
-// fprintf(stderr, "vec float\n");fflush(stderr);
-
         cblas_sgemm ( // Specific for single precision
             CblasRowMajor, CblasNoTrans, CblasNoTrans,
             M, N, K,
@@ -1263,7 +1287,6 @@ vec_t* vec_get_dot (vec_t* A, vec_t* B)
             (float) beta,
             (float*) AB->vec, ldc 
         );
-// fprintf(stderr, "after cblas_sgemm\n");fflush(stderr);
     }
     else if (VEC_TYPE == VEC_DOUBLE)
     {
