@@ -23,7 +23,7 @@ dataset_t* dat_new ()
 
     // Some default values
     data->size               = 0;
-    data->batch_size         = 512;//128;
+    data->batch_size         = 128;
     data->row_offset         = 0;
     data->current_batch      = 0;
     data->current_epoch      = 0;
@@ -123,15 +123,17 @@ void dat_add_noise (vec_t* data)
     {
         for (j = 0; j < data->n; j++)
         {
-            int randint = rand() % 11;
+            // 5% chance of adding noise to element
+            int randint = rand() % 21;//11;
             int condition = randint <= 1;
 
             if (condition)
             {
                 vec_type_t elem  = vec_get(data,i,j);
                 vec_type_t noise = (vec_type_t) ut_gaussian_rand();
-                noise /= 10;
-                noise = fmax(0,elem+noise);
+                noise /= 100;//10;
+                //noise = fmax(0,elem+noise);
+                noise = (fabs(elem+noise));
                 vec_set(data,i,j, noise);
             }
         }
@@ -384,8 +386,11 @@ dataset_t* dat_get_dataset_from_representation_1 (
 )
 {
     int line;
+    
     int max_chars = 160*7;//128*5;
     // int max_chars = 128*5;
+    // int max_chars = 128;
+    
     int output_size = 2;
 
     dataset_t* dataset = dat_new();
@@ -431,7 +436,7 @@ dataset_t* dat_get_dataset_from_representation_1 (
 
 
 
-void dat_print_vec_lines (vec_t* data)
+void dat_print_text (vec_t* data)
 {
     int i, j;
 
@@ -439,7 +444,11 @@ void dat_print_vec_lines (vec_t* data)
     {
         for (j = 0; j < data->n; j++)
         {
-            printf("%c", (char) vec_get(data, i, j));
+            vec_type_t elem = (vec_type_t) vec_get(data,i,j);
+            unsigned char c = (unsigned char) (elem * UCHAR_MAX);
+            // if (c == 0)
+            //     c = ' ';
+            printf("%c", (char) c);
         }
         printf("\n");
     }

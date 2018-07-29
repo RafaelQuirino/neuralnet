@@ -101,7 +101,7 @@ dataset_t* dat_get_dataset_from_representation_1(
     const char* linesfile, const char* labelsfile
 );
 
-void dat_print_vec_lines (vec_t* data);
+void dat_print_text (vec_t* data);
 //-----------------------------------------------------------------------------
 
 
