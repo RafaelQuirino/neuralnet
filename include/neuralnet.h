@@ -142,7 +142,8 @@ void          nn_export  (neuralnet_t* nn, const char* fname);
 neuralnet_t*  nn_import  (const char* fname);
 unsigned long nn_get_mem (neuralnet_t* nn);
 
-void nn_initialize_weights (neuralnet_t* nn);
+void nn_initialize_weights       (neuralnet_t* nn);
+void nn_initialize_weight_matrix (neuralnet_t* nn, int layer);
 
 // Configuring neuralnet's mechanism parameters
 void nn_set_cost_function     (neuralnet_t* nn, int cost_func_code);

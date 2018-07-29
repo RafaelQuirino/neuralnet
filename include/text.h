@@ -8,6 +8,9 @@ extern "C" {
 
 typedef char*          text_t;
 typedef unsigned char* utext_t;
+typedef unsigned char* uchar_t;
+
+
 
 utext_t* txt_get_ulines   (const char* fname, int* num_lines);
 void     txt_print_uline  (utext_t uline);

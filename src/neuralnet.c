@@ -176,10 +176,10 @@ neuralnet_t* nn_new (int topology[], int tsize)
 	newnet->regularization    = NN_L2_REGULARIZATION;
 	newnet->optimization      = NN_ADAM_OPTIMIZATION;
 	
-	newnet->rms_rate            = 0.999;
+	newnet->rms_rate            = 0.9;
 	newnet->momentum_rate       = 0.9;
-	newnet->learning_rate       = 0.0001;
-	newnet->regularization_rate = 0.9;
+	newnet->learning_rate       = 0.001;
+	newnet->regularization_rate = 0.0001;
 
 	// Setting output layer's activation
 	//===================================
@@ -605,6 +605,7 @@ void nn_initialize_weights (neuralnet_t* nn)
 
 	for (k = 0; k < nn->nlayers-1; k++) 
 	{
+		// vec_free(&nn->W[k]);
 		nn->W[k] = vec_new(nn->topology[k],nn->topology[k+1]);
 
 		for (i = 0; i < nn->W[k]->m; i++)
@@ -616,6 +617,34 @@ void nn_initialize_weights (neuralnet_t* nn)
 				val *= (vec_type_t) init_term;
 				vec_set(nn->W[k],i,j,val);
 			}
+		}
+	}
+}
+
+
+
+void nn_initialize_weight_matrix (neuralnet_t* nn, int layer)
+{
+	if (layer < 0 || layer >= nn->nlayers-1)
+	{
+		ut_errmsg (
+			"Invalid layer.",
+			__FILE__, __LINE__-6, 1
+		);
+	}
+
+	int i, j, k = layer;
+	vec_free(&nn->W[k]);
+	nn->W[k] = vec_new(nn->topology[k],nn->topology[k+1]);
+
+	for (i = 0; i < nn->W[k]->m; i++)
+	{
+		for (j = 0; j < nn->W[k]->n; j++)
+		{
+			vec_type_t val = (vec_type_t) ut_gaussian_rand();
+			float init_term = sqrt(1.0/(float)nn->topology[k]);
+			val *= (vec_type_t) init_term;
+			vec_set(nn->W[k],i,j,val);
 		}
 	}
 }
@@ -790,8 +819,6 @@ vec_t* nn_forward (neuralnet_t* nn, vec_t* data)
 // (Just to get neural_net's output, not running backpropagation)
 vec_t* nn_feed_forward (neuralnet_t* nn, vec_t* data)
 {
-// fprintf(stderr,"nn_feed_forward\n");fflush(stderr);
-
 	int line = __LINE__ - 2;
 	if(data->n != nn->W[0]->m) 
 	{
@@ -822,7 +849,6 @@ vec_t* nn_feed_forward (neuralnet_t* nn, vec_t* data)
 	//-----------------------------------------------------
 	for (i = 0; i < nn->nlayers-1; i++) 
 	{
-// printf("<%d>\n", i);
 		// First, Z[i] = layerInput * nn->W[i]
 		nn->Z[i] = vec_get_dot (layerInput, nn->W[i]);
 		
@@ -1178,7 +1204,7 @@ void nn_backpropagation_sgd (
 	double costmean = 0.0;
 
 	// Parameters
-	double momentum        = nn->momentum_rate;
+	// double momentum        = nn->momentum_rate;
 	double learning_rate   = nn->learning_rate;
 	int current_epoch = 0;
 

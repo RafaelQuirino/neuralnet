@@ -13,12 +13,12 @@
 
 
 
-#define NET_TRAIN_MODE      0
-#define NET_TEST_MODE       1
-#define AE_TRAIN_MODE       2
-#define AE_TEST_MODE        3
-#define NET_AE_TRAIN_MODE   4
-#define NET_AE_TEST_MODE    5
+#define NET_TRAIN_MODE     0
+#define NET_RUN_MODE       1
+#define AE_TRAIN_MODE      2
+#define AE_RUN_MODE        3
+#define NET_AE_TRAIN_MODE  4
+#define NET_AE_RUN_MODE    5
 
 
 
@@ -46,6 +46,13 @@ void print_config (neuralnet_t* nn)
 
 int main (int argc, char** argv)
 {
+    // vec_t* A = vec_new(3,3);
+    // vec_set_all(A,2);
+    // vec_print(A);
+    // vec_type_t sum = vec_inner_sum(A);
+    // printf("%g\n", sum);
+    // exit(0);
+
     // Arguments ------------------------------------------
     if (argc != 8)
     {
@@ -72,13 +79,14 @@ int main (int argc, char** argv)
 
     // Variables
     int i, j;
-    int num_layers = 4;
+    int num_layers = 5;
     unsigned long mem, memaux, memtotal = 0;
 
 
 
     fprintf(stderr, "Getting data...\n");
     dataset_t* dataset = dat_get_dataset_from_representation_1(file, labels);
+    fprintf(stderr, "Number of samples: %d\n", dataset->size);
     mem = dat_get_mem(dataset);
     memtotal += mem;
     fprintf(stderr, "dataset memory: %g MB\n", (double)mem/(1024.0*1024.0));
@@ -126,9 +134,9 @@ int main (int argc, char** argv)
         fprintf(stderr, "\ntotal memory: %g MB\n\n", (double)memtotal/(1024.0*1024.0));
 	}
 
-	else if (mode == NET_TEST_MODE)
+	else if (mode == NET_RUN_MODE)
 	{
-		fprintf(stderr, "\nNET_TEST_MODE\n\n");
+		fprintf(stderr, "\nNET_RUN_MODE\n\n");
 
 		// Build neural_net_t*
 		neuralnet_t* nn = nn_import(net_file);
@@ -165,8 +173,8 @@ int main (int argc, char** argv)
 		{
             ae = ae_new(dataset->X->n);
 
-            int topology[3] = {1120,840,1120};
-            ae = ae_new_top(topology,3);
+            // int topology[3] = {1120,840,1120};
+            // ae = ae_new_top(topology,3);
         }
         else
         {
@@ -194,9 +202,13 @@ int main (int argc, char** argv)
         fprintf(stderr, "Done.\n\n");
 
         // Train
-        nn_backpropagation_sgd (
-            ae, ae_file, dataset, iterations
-        );
+        // nn_backpropagation (
+        //     ae, dataset->X, dataset->Y, iterations, 0.001
+        // );
+        // nn_backpropagation_sgd (
+        //     ae, ae_file, dataset, iterations
+        // );
+        ae_train(ae, ae_file, dataset, iterations);
 
 		// Export nn and free memory
 		nn_export(ae, ae_file);
@@ -205,9 +217,32 @@ int main (int argc, char** argv)
         fprintf(stderr, "\ntotal memory: %g MB\n\n", (double)memtotal/(1024.0*1024.0));
     }
 
-    else if (mode == AE_TEST_MODE)
+    else if (mode == AE_RUN_MODE)
     {
-        
+        fprintf(stderr, "\nAE_RUN_MODE\n\n");
+
+        dat_print_text(dataset->X);
+        // exit(0);
+
+		// Build neural_net_t*
+		neuralnet_t* ae = nn_import(ae_file);
+        fprintf(stderr, "Loaded neural network.\n");
+		print_topology(ae);
+		print_config(ae);
+        mem = nn_get_mem(ae);
+        memtotal += mem;
+        fprintf(stderr, "neural network memory: %g MB\n\n", (double)mem/(1024.0*1024.0));
+
+		// Feed data forward
+        fprintf(stderr, "Running autoencoder...\n");
+		vec_t* output = nn_feed_forward(ae, dataset->X);
+        mem = vec_get_mem(output);
+        memtotal += mem;
+        fprintf(stderr, "Output size: %g MB\n\n", (double)mem/(1024.0*1024.0));
+
+        dat_print_text(output);
+
+        fprintf(stderr, "\ntotal memory: %g MB\n\n", (double)memtotal/(1024.0*1024.0));
     }
 
     else if (mode == NET_AE_TRAIN_MODE)
@@ -237,14 +272,14 @@ int main (int argc, char** argv)
 
 		if (use_net == 0)
 		{
-			// int topology[num_layers];
-			// for (i = 0; i < num_layers; i++)
-            // {
-			// 	topology[i] = i == num_layers-1 ? 2 : dataset->X->n;
-            // }
+			int topology[num_layers];
+			for (i = 0; i < num_layers; i++)
+            {
+				topology[i] = i == num_layers-1 ? 2 : dataset->X->n;
+            }
 
-            // int topology[4] = {560,256,256,2};
-            int topology[4] = {840,256,256,2};
+            // // int topology[4] = {560,256,256,2};
+            // int topology[5] = {320,256,256,256,2};
 
 			nn = nn_new(topology, num_layers);
             fprintf(stderr, "Created new neural network.\n");
@@ -276,9 +311,9 @@ int main (int argc, char** argv)
         fprintf(stderr, "\ntotal memory: %g MB\n\n", (double)memtotal/(1024.0*1024.0));
     }
 
-    else if (mode == NET_AE_TEST_MODE)
+    else if (mode == NET_AE_RUN_MODE)
     {
-        fprintf(stderr, "\nNET_AE_TEST_MODE\n\n");
+        fprintf(stderr, "\nNET_AE_RUN_MODE\n\n");
 
         neuralnet_t*   nn;
         autoencoder_t* ae;
