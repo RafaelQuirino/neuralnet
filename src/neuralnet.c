@@ -172,7 +172,7 @@ neuralnet_t* nn_new (int topology[], int tsize)
 	// Configurations
 	//================
 	newnet->cost_function     = NN_SQUARE_ERROR;
-	newnet->output_activation = NN_SOFTMAX_ACTIVATION;
+	newnet->output_activation = NN_SIGMOID_ACTIVATION;//NN_SOFTMAX_ACTIVATION;
 	newnet->regularization    = NN_L2_REGULARIZATION;
 	newnet->optimization      = NN_ADAM_OPTIMIZATION;
 	

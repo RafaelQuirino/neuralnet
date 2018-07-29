@@ -152,7 +152,7 @@ arr1.each_with_index do |item, index|
 end
 
 if printfn
-	data1.sort_by{|x| x[:b] - x[:a]}.each do |v|
+	data1.sort_by{|x| (2.0*x[:b] - x[:a])/3.0}.each do |v|
 		puts v[:output]
 	end
 end
@@ -160,7 +160,7 @@ end
 # puts "\n\n\n\n---\n\n\n\n"
 
 if printfp
-	data2.sort_by{|x| x[:a] - x[:b]}.each do |v|
+	data2.sort_by{|x| (2.0*x[:a] - x[:b])/3.0}.each do |v|
 		puts v[:output]
 	end
 end
