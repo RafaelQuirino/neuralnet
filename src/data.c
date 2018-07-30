@@ -397,36 +397,41 @@ dataset_t* dat_get_dataset_from_representation_1 (
 
     int num_lines, num_lines_2;
     utext_t* lines  = txt_get_ulines(linesfile, &num_lines);
-    // txt_print_ulines(lines,num_lines);
-    // exit(0);
-    utext_t* labels = txt_get_ulines(labelsfile, &num_lines_2);
-    line = __LINE__ - 1;
-
-    // printf("%d, %d\n", num_lines, num_lines_2);
-
-    if (num_lines != num_lines_2)
-    if (abs(num_lines - num_lines_2) > 1) // Hardcoded solution. Needs fixing...
-    {
-        ut_errmsg (
-            "Text and label files doesn't match.",
-            __FILE__, line, 1
-        );
-    }
     
+    utext_t* labels;
+    if (labelsfile != NULL)
+    {
+        labels = txt_get_ulines(labelsfile, &num_lines_2);
+        line = __LINE__ - 1;
+
+        // printf("%d, %d\n", num_lines, num_lines_2);
+
+        // if (num_lines != num_lines_2)
+        if (abs(num_lines - num_lines_2) > 1) // Hardcoded solution. Needs fixing...
+        {
+            ut_errmsg (
+                "Text and label files doesn't match.",
+                __FILE__, line, 1
+            );
+        }
+    }
+
     dataset->X = vec_new_arr(
         dat_get_lines_representation_1(lines, num_lines, max_chars),
         num_lines, max_chars
     );
 
-    dataset->Y = vec_new_arr(
-        dat_get_lines_label_1(labels, num_lines, output_size),
-        num_lines, output_size
-    );
+    if (labelsfile != NULL)
+    {
+        dataset->Y = vec_new_arr(
+            dat_get_lines_label_1(labels, num_lines, output_size),
+            num_lines, output_size
+        );
+        txt_free_ulines(&labels, num_lines);
+    }
     
     dataset->size = num_lines;
-
     txt_free_ulines(&lines, num_lines);
-    txt_free_ulines(&labels, num_lines);
 
     // dat_normalize(dataset);
     // dat_shuffle(dataset);

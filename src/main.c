@@ -66,7 +66,7 @@ int main (int argc, char** argv)
         exit(1);
     }
     
-    char* file       = argv[1];
+    char* data       = argv[1];
     char* labels     = argv[2];
     char* net_file   = argv[3];
     char* ae_file    = argv[4];
@@ -87,11 +87,13 @@ int main (int argc, char** argv)
 
 
     fprintf(stderr, "Getting data...\n");
-    dataset_t* dataset = dat_get_dataset_from_representation_1(file, labels);
+    dataset_t* dataset = dat_get_dataset_from_representation_1(data, labels);
     fprintf(stderr, "Number of samples: %d\n", dataset->size);
     mem = dat_get_mem(dataset);
     memtotal += mem;
     fprintf(stderr, "dataset memory: %g MB\n", (double)mem/(1024.0*1024.0));
+
+
 
 	if (mode == NET_TRAIN_MODE)
 	{
