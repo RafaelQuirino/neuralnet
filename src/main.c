@@ -73,6 +73,9 @@ int main (int argc, char** argv)
     int   iterations = atoi(argv[5]);
     int   use_net    = atoi(argv[6]);
     int   mode       = atoi(argv[7]);
+
+    if (strcmp(labels,"NULL") == 0)
+        labels = NULL;
     //-----------------------------------------------------
 
 
