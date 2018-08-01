@@ -29,9 +29,7 @@ file2 = File.read(ARGV[1])
 file3 = ARGV[2]
 printfp = ARGV[3]
 printfn = ARGV[4]
-#threshold = ARGV[4]
 
-#arr1 = file1.split("\n").map{|x| x.to_f}
 arr1 = file1.split("\n")
 arr1.each_with_index do |item,index|
 	arr1[index] = item.split(" ").map{|x| x.to_f}
@@ -43,20 +41,10 @@ acertou = 0
 errou = 0
 fp = 0
 fn = 0
-fparr = []
-# threshold = ARGV[5].to_f
 data1 = []
 data2 = []
 
 arr1.each_with_index do |item, index|
-	# puts "[#{item[0]},#{item[1]}] => #{item[1]-item[0]}"
-	# next
-
-	# condition = arr1[index][0] > arr1[index][1]
-	# condition = (arr1[index][1] - arr1[index][0]) < 0.01
-	# condition = true
-
-	# condition = arr1[index][0] > arr1[index][1]
 	condition1 = arr1[index][0] > arr1[index][1]
 	condition2 = arr1[index][0] < arr1[index][1]
 
@@ -75,9 +63,6 @@ arr1.each_with_index do |item, index|
 			fn += 1
 			if (printfn == "true")
 				line = `sed -n #{index+1}p #{file3}`
-				#puts "#{index+1} -> #{arr2[index]}, [#{arr1[index][0]},#{arr1[index][1]}]"
-
-
 				output = [
 					"#{index+1} -> #{arr2[index]}, [#{arr1[index][0]},#{arr1[index][1]}]",
 					"[#{line.gsub("\n","")[0..159]}]",
@@ -94,28 +79,12 @@ arr1.each_with_index do |item, index|
 					b: arr1[index][1],
 					output: output
 				}
-=begin
-				begin
-					puts "[#{line.gsub("\n","")[0..159]}]"
-					puts "[#{line.gsub("\n","")[160..319]}]"
-					puts "[#{line.gsub("\n","")[320..479]}]"
-					puts "[#{line.gsub("\n","")[480..639]}]".green.bold
-					puts "[#{line.gsub("\n","")[640..799]}]"
-					puts "[#{line.gsub("\n","")[800..959]}]"
-					puts "[#{line.gsub("\n","")[960...1120]}]\n\n"
-				rescue => e
-					puts e.message
-				end
-=end
 			end
 		else
 			fp += 1
-			fparr << (index + 1)
 
 			if (printfp == "true")
 				line = `sed -n #{index+1}p #{file3}`
-				#puts "#{index+1} -> #{arr2[index]}, [#{arr1[index][0]},#{arr1[index][1]}]"
-
 				output = [
 					"#{index+1} -> #{arr2[index]}, [#{arr1[index][0]},#{arr1[index][1]}]",
 					"[#{line.gsub("\n","")[0..159]}]",
@@ -132,20 +101,6 @@ arr1.each_with_index do |item, index|
 					b: arr1[index][1],
 					output: output
 				}
-
-=begin
-				begin
-					puts "[#{line.gsub("\n","")[0..159]}]"
-					puts "[#{line.gsub("\n","")[160..319]}]"
-					puts "[#{line.gsub("\n","")[320..479]}]"
-					puts "[#{line.gsub("\n","")[480..639]}]".green.bold
-					puts "[#{line.gsub("\n","")[640..799]}]"
-					puts "[#{line.gsub("\n","")[800..959]}]"
-					puts "[#{line.gsub("\n","")[960...1120]}]\n\n"
-				rescue => e
-					puts e.message
-				end
-=end
 			end
 		end
 	end
@@ -156,8 +111,6 @@ if printfn
 		puts v[:output]
 	end
 end
-
-# puts "\n\n\n\n---\n\n\n\n"
 
 if printfp
 	data2.sort_by{|x| (2.0*x[:a] - x[:b])/3.0}.each do |v|
